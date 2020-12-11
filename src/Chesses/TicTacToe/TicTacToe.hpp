@@ -1,25 +1,29 @@
+#pragma once
+
 #include <array>
 #include <optional>
 #include <iostream>
 
 class TicTacToe
 {
+public:
+    inline static constexpr unsigned int PlayerCount = 2;
+    using Result = std::array<double, 2>;
+
 private:
     // 0: Player1; 1: Player2; 2: Empty
     std::array<std::array<unsigned char, 3>, 3> _Board;
     unsigned int _NextPlayer = 0, _MoveCount = 0;
+    std::optional<Result> _Result;
 
 public:
-    inline static constexpr unsigned int PlayerCount = 2;
-    using MoveResult = std::optional<std::array<double, 2>>;
-
     class Action
     {
         friend class TicTacToe;
         friend class ActionIterator;
 
     private:
-        unsigned char _Row = -1, _Col = -1;
+        unsigned char _Row = 0, _Col = -1;
         inline explicit Action(unsigned char row, unsigned char col) : _Row(row), _Col(col) {}
 
     public:
@@ -37,9 +41,10 @@ public:
         friend class TicTacToe;
 
     private:
-        const TicTacToe *_Game;
+        const TicTacToe *_Game = nullptr;
         Action _Action;
-        inline explicit ActionIterator(const TicTacToe *game) : _Game(game), _Action(0, -1) { ++*this; }
+        inline explicit ActionIterator() = default;
+        inline explicit ActionIterator(const TicTacToe *game) : _Game(game) { ++*this; }
 
     public:
         inline bool operator!=(ActionIterator) const { return _Action._Row < 3; }
@@ -48,7 +53,7 @@ public:
     };
 
     inline ActionIterator begin() const { return ActionIterator(this); }
-    inline ActionIterator end() const { return ActionIterator(nullptr); }
+    inline ActionIterator end() const { return ActionIterator(); }
 
     inline explicit TicTacToe()
     {
@@ -61,7 +66,8 @@ public:
     {
         return action._Row < 3 && action._Col < 3 && _Board[action._Row][action._Col] == 2;
     }
+    inline std::optional<Result> GetResult() const { return _Result; }
 
-    MoveResult operator()(Action action);
+    void operator()(Action action);
     friend std::ostream &operator<<(std::ostream &os, const TicTacToe &game);
 };

@@ -37,7 +37,7 @@ INCLUDES =
 #Linker flags
 LDFLAGS =
 # Compiler flags
-CFLAGS = -O0 -g -Wall -std=c++17
+CFLAGS = -O3 -std=c++17 -Wall -Wextra -pedantic
 # Libraries
 LIBS = 
 

@@ -4,7 +4,10 @@
 
 int main()
 {
-    Controller<TicTacToe, HumanPlayer, HumanPlayer> controller;
+    using Game = TicTacToe;
+    using Player1 = HumanPlayer<Game>;
+    using Player2 = HumanPlayer<Game>;
+    Controller<Game, Player1, Player2> controller;
     auto result = controller.Start();
     std::cout << "Game over! " << result[0] << ':' << result[1] << '\n';
     return 0;

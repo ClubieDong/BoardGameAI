@@ -19,7 +19,7 @@ std::istream &operator>>(std::istream &is, TicTacToe::Action &action)
             action._Col = value[i] - 'a';
             break;
         }
-    if (action._Col == -1)
+    if (action._Col == static_cast<unsigned char>(-1))
         return is;
     for (size_t i = 0; i < value.size(); ++i)
         if (std::isdigit(value[i]))
@@ -44,7 +44,7 @@ void TicTacToe::ActionIterator::operator++()
     } while (_Action._Row < 3 && _Game->_Board[_Action._Row][_Action._Col] != 2);
 }
 
-TicTacToe::MoveResult TicTacToe::operator()(Action action)
+void TicTacToe::operator()(Action action)
 {
     assert(IsValid(action));
     _Board[action._Row][action._Col] = _NextPlayer;
@@ -69,19 +69,17 @@ TicTacToe::MoveResult TicTacToe::operator()(Action action)
                   _Board[2][0] == _NextPlayer);
     if (win)
     {
-        std::array<double, 2> res;
-        res[_NextPlayer] = 1;
-        res[!_NextPlayer] = 0;
-        return res;
+        _Result.emplace();
+        (*_Result)[_NextPlayer] = 1;
+        (*_Result)[!_NextPlayer] = 0;
     }
     // Draw
-    if (_MoveCount == 9)
+    else if (_MoveCount == 9)
     {
-        std::array<double, 2> res = {0.5, 0.5};
-        return res;
+        _Result.emplace();
+        (*_Result)[0] = (*_Result)[1] = 0.5;
     }
     _NextPlayer = !_NextPlayer;
-    return std::nullopt;
 }
 
 std::ostream &operator<<(std::ostream &os, const TicTacToe &game)
