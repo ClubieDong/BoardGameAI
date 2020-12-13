@@ -1,7 +1,7 @@
 #include "TicTacToe.hpp"
 #include <string>
-#include <algorithm>
 #include <cassert>
+#include <cctype>
 
 std::istream &operator>>(std::istream &is, TicTacToe::Action &action)
 {
@@ -33,7 +33,7 @@ std::istream &operator>>(std::istream &is, TicTacToe::Action &action)
 
 void TicTacToe::ActionIterator::operator++()
 {
-    do
+    while (true)
     {
         ++_Action._Col;
         if (_Action._Col == 3)
@@ -41,7 +41,11 @@ void TicTacToe::ActionIterator::operator++()
             _Action._Col = 0;
             ++_Action._Row;
         }
-    } while (_Action._Row < 3 && _Game->_Board[_Action._Row][_Action._Col] != 2);
+        if (_Action._Row >= 3)
+            break;
+        if (_Game->_Board[_Action._Row][_Action._Col] == 2)
+            break;
+    }
 }
 
 void TicTacToe::operator()(Action action)
@@ -88,10 +92,10 @@ std::ostream &operator<<(std::ostream &os, const TicTacToe &game)
     for (char i = 'A'; i < 'A' + 3; ++i)
         os << i << ' ';
     os << '\n';
-    for (int i = 0; i < 3; ++i)
+    for (unsigned char i = 0; i < 3; ++i)
     {
         os << i + 1 << ' ';
-        for (int j = 0; j < 3; ++j)
+        for (unsigned char j = 0; j < 3; ++j)
             if (game._Board[i][j] == 0)
                 os << "○ ";
             else if (game._Board[i][j] == 1)

@@ -11,7 +11,7 @@
 #include <type_traits>
 #include "../RandomPlayer/RandomPlayer.hpp"
 
-template <typename Game, unsigned int Iterations, typename Ratio = std::ratio<2, 1>,
+template <typename Game, unsigned int Iterations, typename Ratio = std::ratio<14, 10>,
           typename Rollout = RandomPlayer<Game>>
 class MCTS
 {
@@ -56,10 +56,10 @@ public:
     inline explicit MCTS(const Game &game) : _Game(&game) {}
     inline explicit MCTS(const Game &game, const std::vector<Action> &) : _Game(&game) {}
 
-    MCTS(const MCTS&) = delete;
-    MCTS& operator=(const MCTS&) = delete;
-    MCTS(MCTS&&) = default;
-    MCTS& operator=(MCTS&&) = default;
+    MCTS(const MCTS &) = delete;
+    MCTS &operator=(const MCTS &) = delete;
+    MCTS(MCTS &&) = default;
+    MCTS &operator=(MCTS &&) = default;
 
     Action operator()()
     {

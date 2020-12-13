@@ -19,10 +19,10 @@ public:
     inline explicit RandomPlayer(const Game &game) : _Game(&game) {}
     inline explicit RandomPlayer(const Game &game, const std::vector<Action> &) : _Game(&game) {}
 
-    RandomPlayer(const RandomPlayer&) = delete;
-    RandomPlayer& operator=(const RandomPlayer&) = delete;
-    RandomPlayer(RandomPlayer&&) = default;
-    RandomPlayer& operator=(RandomPlayer&&) = default;
+    RandomPlayer(const RandomPlayer &) = delete;
+    RandomPlayer &operator=(const RandomPlayer &) = delete;
+    RandomPlayer(RandomPlayer &&) = default;
+    RandomPlayer &operator=(RandomPlayer &&) = default;
 
     Action operator()() const
     {

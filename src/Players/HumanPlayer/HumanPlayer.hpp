@@ -17,12 +17,12 @@ private:
 public:
     inline explicit HumanPlayer(const Game &game, const std::vector<Action> &historyActions)
         : _Game(&game), _HistoryActions(&historyActions) {}
-        
-    HumanPlayer(const HumanPlayer&) = delete;
-    HumanPlayer& operator=(const HumanPlayer&) = delete;
-    HumanPlayer(HumanPlayer&&) = default;
-    HumanPlayer& operator=(HumanPlayer&&) = default;
-    
+
+    HumanPlayer(const HumanPlayer &) = delete;
+    HumanPlayer &operator=(const HumanPlayer &) = delete;
+    HumanPlayer(HumanPlayer &&) = default;
+    HumanPlayer &operator=(HumanPlayer &&) = default;
+
     Action operator()() const
     {
         bool first = true;
