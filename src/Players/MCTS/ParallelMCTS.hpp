@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "../RandomPlayer/RandomPlayer.hpp"
 #include "../../Utilities/ThreadSafeQueue.hpp"
+#include "../../Utilities/StaticMemoryPool.hpp"
 
 template <typename Game, unsigned int TimeLimit, unsigned long long MemoryLimit, unsigned int WorkerLimit,
           typename Ratio = std::ratio<14, 10>, typename Rollout = RandomPlayer<Game>>
@@ -29,7 +30,12 @@ public:
     using Result = typename Game::Result;
 
 private:
+    template <typename T>
+    using UniquePtr = std::unique_ptr<T, void (*)(T *)>;
     inline static constexpr double C = static_cast<double>(Ratio::num) / Ratio::den;
+    // TODO:
+    // I don't know why but the actual memory usage is about 130% of the memory limit.
+    inline static constexpr unsigned long long ActualMemoryLimit = MemoryLimit / 1.3;
     static_assert(C >= 0);
 
     class Node
@@ -37,72 +43,64 @@ private:
         friend class ParallelMCTS;
 
     private:
-        inline static unsigned long long _NodeCount = 0;
-        inline static unsigned long long _GameCount = 0;
-
         Node *_Parent = nullptr;
-        std::vector<std::unique_ptr<Node>> _Children;
-        std::unique_ptr<Game> _Game;
+        std::vector<UniquePtr<Node>> _Children;
+        UniquePtr<Game> _Game;
         unsigned int _NextPlayer;
         Action _Action;
         std::array<double, PlayerCount> _Value{};
         unsigned int _Count = 0, _Working = 0;
 
-        inline void RemoveGame()
-        {
-            if (!_Game)
-                return;
-            _Game = nullptr;
-            --_GameCount;
-        }
-
     public:
         inline explicit Node(const Game &game)
-            : _Game(std::make_unique<Game>(game)), _NextPlayer(game.GetNextPlayer())
-        {
-            ++_NodeCount;
-            ++_GameCount;
-        }
+            : _Game(StaticMemoryPool<Game>::make_unique(game)), _NextPlayer(game.GetNextPlayer()) {}
         inline explicit Node(const Game &game, Action action, Node &parent)
-            : _Parent(&parent), _Game(std::make_unique<Game>(game)),
-              _NextPlayer(game.GetNextPlayer()), _Action(action)
-        {
-            ++_NodeCount;
-            ++_GameCount;
-        }
-        inline ~Node()
-        {
-            if (_Game)
-                --_GameCount;
-            --_NodeCount;
-        }
+            : _Parent(&parent), _Game(StaticMemoryPool<Game>::make_unique(game)),
+              _NextPlayer(game.GetNextPlayer()), _Action(action) {}
     };
 
     const Game *_Game;
-    std::unique_ptr<Node> _Root;
+
+    UniquePtr<Node> _Root;
     mutable std::mutex _RootMtx;
     std::condition_variable _RootCV;
     std::atomic<unsigned int> _Pending = 0;
+    bool _Stop = false;
+
     ThreadSafeQueue<Action> _ActionQueue;
     ThreadSafeQueue<std::pair<Node *, Game>> _RolloutQueue;
     ThreadSafeQueue<std::pair<Node *, Result>> _ResultQueue;
+
     std::thread _TPrune, _TSelExp, _TBp;
     std::array<std::thread, WorkerLimit> _TSims;
+
+    inline bool CheckMemoryUsage() const
+    {
+        if (ActualMemoryLimit == 0)
+            return true;
+        return StaticMemoryPool<Node>::size() + StaticMemoryPool<Game>::size() < ActualMemoryLimit;
+    }
 
     void Prune()
     {
         std::unique_lock<std::mutex> rootLock(_RootMtx);
         while (true)
         {
-            while (_ActionQueue.IsEmpty() || _Pending > 0)
+            while (true)
+            {
+                if (_Stop)
+                    return;
+                if (!_ActionQueue.IsEmpty() && _Pending == 0)
+                    break;
                 _RootCV.wait(rootLock);
+            }
             while (!_ActionQueue.IsEmpty())
             {
                 auto action = _ActionQueue.Pop();
-                auto pred = [action](const std::unique_ptr<Node> &x) { return x->_Action == action; };
+                auto pred = [action](const UniquePtr<Node> &x) { return x->_Action == action; };
                 auto iter = std::find_if(_Root->_Children.begin(), _Root->_Children.end(), pred);
                 if (iter == _Root->_Children.end())
-                    _Root = std::make_unique<Node>(*_Game);
+                    _Root = StaticMemoryPool<Node>::make_unique(*_Game);
                 else
                     _Root = std::move(*iter);
             }
@@ -115,9 +113,14 @@ private:
         std::unique_lock<std::mutex> rootLock(_RootMtx);
         while (true)
         {
-            while (!_ActionQueue.IsEmpty() || _RolloutQueue.GetSize() >= WorkerLimit ||
-                   (MemoryLimit != 0 && Node::_NodeCount * sizeof(Node) + Node::_GameCount * sizeof(Game) > MemoryLimit))
+            while (true)
+            {
+                if (_Stop)
+                    return;
+                if (_ActionQueue.IsEmpty() && _RolloutQueue.GetSize() < WorkerLimit && CheckMemoryUsage())
+                    break;
                 _RootCV.wait(rootLock);
+            }
             while (_RolloutQueue.GetSize() < WorkerLimit)
             {
                 ++_Pending;
@@ -161,12 +164,12 @@ private:
                     {
                         auto game = *p->_Game;
                         game(act);
-                        auto node = std::make_unique<Node>(game, act, *p);
+                        auto node = StaticMemoryPool<Node>::make_unique(game, act, *p);
                         p->_Children.push_back(std::move(node));
                     }
                     assert(p->_Children.size() > 0);
                     p->_Children.shrink_to_fit();
-                    p->RemoveGame();
+                    p->_Game = nullptr;
                     p = p->_Children[0].get();
                 }
                 _RolloutQueue.Push({p, *p->_Game});
@@ -187,6 +190,8 @@ private:
         while (true)
         {
             auto [p, game] = _RolloutQueue.Pop();
+            if (!p)
+                return;
             _RootCV.notify_all();
             // Rollout
             Rollout roll(game);
@@ -206,6 +211,8 @@ private:
         while (true)
         {
             auto [p, value] = _ResultQueue.Pop();
+            if (!p)
+                return;
             std::lock_guard<std::mutex> rootLock(_RootMtx);
             // Complete back propagation
             while (true)
@@ -224,7 +231,8 @@ private:
     }
 
 public:
-    inline explicit ParallelMCTS(const Game &game) : _Game(&game), _Root(std::make_unique<Node>(game))
+    inline explicit ParallelMCTS(const Game &game)
+        : _Game(&game), _Root(StaticMemoryPool<Node>::make_unique(game))
     {
         _TPrune = std::thread([this] { Prune(); });
         _TSelExp = std::thread([this] { SelectAndExpand(); });
@@ -233,6 +241,20 @@ public:
         _TBp = std::thread([this] { BackPropagate(); });
     }
     inline explicit ParallelMCTS(const Game &game, const std::vector<Action> &) : ParallelMCTS(game) {}
+
+    inline ~ParallelMCTS()
+    {
+        _Stop = true;
+        _ActionQueue.Push(Action());
+        for (unsigned int i = 0; i < WorkerLimit; ++i)
+            _RolloutQueue.Push({nullptr, Game()});
+        _ResultQueue.Push({nullptr, Result()});
+        _TPrune.join();
+        _TSelExp.join();
+        for (auto &i : _TSims)
+            i.join();
+        _TBp.join();
+    }
 
     ParallelMCTS(const ParallelMCTS &) = delete;
     ParallelMCTS &operator=(const ParallelMCTS &) = delete;
