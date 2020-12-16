@@ -58,9 +58,10 @@ public:
 
     MCTS(const MCTS &) = delete;
     MCTS &operator=(const MCTS &) = delete;
-    MCTS(MCTS &&) = default;
-    MCTS &operator=(MCTS &&) = default;
+    inline MCTS(MCTS &&) = default;
+    inline MCTS &operator=(MCTS &&) = default;
 
+    inline void Notify(Action) const {}
     Action operator()()
     {
         Node root(*_Game);

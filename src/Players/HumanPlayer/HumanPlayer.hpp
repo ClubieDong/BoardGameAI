@@ -20,16 +20,16 @@ public:
 
     HumanPlayer(const HumanPlayer &) = delete;
     HumanPlayer &operator=(const HumanPlayer &) = delete;
-    HumanPlayer(HumanPlayer &&) = default;
-    HumanPlayer &operator=(HumanPlayer &&) = default;
+    inline HumanPlayer(HumanPlayer &&) = default;
+    inline HumanPlayer &operator=(HumanPlayer &&) = default;
 
+    inline void Notify(Action) const {}
     Action operator()() const
     {
         bool first = true;
         Action action;
         do
         {
-            std::ignore = system("clear");
             std::cout << *_Game;
             if (!first)
                 std::cout << ">>> Invalid move <<<";

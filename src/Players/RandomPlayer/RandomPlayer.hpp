@@ -21,9 +21,10 @@ public:
 
     RandomPlayer(const RandomPlayer &) = delete;
     RandomPlayer &operator=(const RandomPlayer &) = delete;
-    RandomPlayer(RandomPlayer &&) = default;
-    RandomPlayer &operator=(RandomPlayer &&) = default;
+    inline RandomPlayer(RandomPlayer &&) = default;
+    inline RandomPlayer &operator=(RandomPlayer &&) = default;
 
+    inline void Notify(Action) const {}
     Action operator()() const
     {
         std::vector<Action> acts;

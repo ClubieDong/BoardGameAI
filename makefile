@@ -35,7 +35,7 @@ STATIC_PATH =
 INCLUDES = 
 
 #Linker flags
-LDFLAGS =
+LDFLAGS = -lpthread
 # Compiler flags
 CFLAGS = -O3 -std=c++17 -Wall -Wextra -pedantic
 # Libraries

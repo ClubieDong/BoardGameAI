@@ -38,6 +38,10 @@ public:
 
     public:
         inline explicit Action() = default;
+        inline friend bool operator==(Action lhs, Action rhs)
+        {
+            return lhs._Row == rhs._Row && lhs._Col == rhs._Col;
+        }
         friend std::istream &operator>>(std::istream &is, Action &action)
         {
             std::string value;
@@ -123,10 +127,10 @@ public:
     {
         assert(IsValid(action));
         _Board[action._Row][action._Col] = _NextPlayer;
-        unsigned char xbegin = std::max(0, action._Row - 2);
-        unsigned char xend = std::min(Size - 1, action._Row + 2);
-        unsigned char ybegin = std::max(0, action._Col - 2);
-        unsigned char yend = std::min(Size - 1, action._Col + 2);
+        unsigned char xbegin = std::max(0, action._Row - 1);
+        unsigned char xend = std::min(Size - 1, action._Row + 1);
+        unsigned char ybegin = std::max(0, action._Col - 1);
+        unsigned char yend = std::min(Size - 1, action._Col + 1);
         for (auto x = xbegin; x <= xend; ++x)
             for (auto y = ybegin; y <= yend; ++y)
                 _Available[x][y] = _Board[x][y] == 2;
@@ -206,9 +210,11 @@ public:
             os << std::setw(2) << i + 1 << ' ';
             for (unsigned char j = 0; j < Size; ++j)
                 if (game._Board[i][j] == 0)
-                    os << "○ ";
+                    // os << "○ ";
+                    os << "* ";
                 else if (game._Board[i][j] == 1)
-                    os << "● ";
+                    // os << "● ";
+                    os << "@ ";
                 else
                     os << "  ";
             os << std::setw(2) << std::left << i + 1 << std::right;
