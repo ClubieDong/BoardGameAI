@@ -5,7 +5,7 @@
 #include <random>
 #include <cassert>
 
-template <typename Game>
+template <typename Game, typename ActGen>
 class RandomPlayer
 {
 public:
@@ -14,21 +14,22 @@ public:
 
 private:
     const Game *_Game;
+    ActGen _ActGen;
 
 public:
-    inline explicit RandomPlayer(const Game &game) : _Game(&game) {}
-    inline explicit RandomPlayer(const Game &game, const std::vector<Action> &) : _Game(&game) {}
+    inline explicit RandomPlayer(const Game &game) : _Game(&game), _ActGen(game) {}
+    inline explicit RandomPlayer(const Game &game, const std::vector<Action> &) : RandomPlayer(game) {}
 
     RandomPlayer(const RandomPlayer &) = delete;
     RandomPlayer &operator=(const RandomPlayer &) = delete;
     inline RandomPlayer(RandomPlayer &&) = default;
     inline RandomPlayer &operator=(RandomPlayer &&) = default;
 
-    inline void Notify(Action) const {}
+    inline void Notify(Action act) { _ActGen.Notify(act); }
     Action operator()() const
     {
         std::vector<Action> acts;
-        for (Action act : *_Game)
+        for (Action act : _ActGen)
             acts.emplace_back(act);
         assert(acts.size() > 0);
         static auto seed = std::chrono::system_clock::now().time_since_epoch().count();

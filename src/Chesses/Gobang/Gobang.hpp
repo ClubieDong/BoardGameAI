@@ -9,106 +9,70 @@
 #include <cctype>
 #include <bitset>
 
-template <unsigned char Size = 15, unsigned char Renju = 5>
+template <unsigned char _Size = 15, unsigned char Renju = 5>
 class Gobang
 {
+public:
+    inline static constexpr unsigned char Size = _Size;
+    inline static constexpr unsigned int PlayerCount = 2;
+    using Result = std::array<double, 2>;
+    using Board = std::array<std::array<unsigned char, Size>, Size>;
+
     static_assert(Renju >= 3);
     static_assert(Renju <= Size && Size <= 26);
 
-public:
-    inline static constexpr unsigned int PlayerCount = 2;
-    using Result = std::array<double, 2>;
-
 private:
     // 0: Player1; 1: Player2; 2: Empty
-    std::array<std::array<unsigned char, Size>, Size> _Board;
+    Board _Board;
     unsigned int _NextPlayer = 0, _MoveCount = 0;
     std::optional<Result> _Result;
-    std::array<std::bitset<Size>, Size> _Available;
 
 public:
     class Action
     {
-        friend class Gobang;
-        friend class ActionIterator;
-
-    private:
-        unsigned char _Row = 0, _Col = -1;
-        inline explicit Action(unsigned char row, unsigned char col) : _Row(row), _Col(col) {}
-
     public:
+        unsigned char Row = 0, Col = -1;
+
         inline explicit Action() = default;
+        inline explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
+
         inline friend bool operator==(Action lhs, Action rhs)
         {
-            return lhs._Row == rhs._Row && lhs._Col == rhs._Col;
+            return lhs.Row == rhs.Row && lhs.Col == rhs.Col;
         }
         friend std::istream &operator>>(std::istream &is, Action &action)
         {
             std::string value;
             std::getline(is, value);
-            action._Row = action._Col = -1;
+            action.Row = action.Col = -1;
             for (size_t i = 0; i < value.size(); ++i)
                 if (std::isupper(value[i]))
                 {
-                    action._Col = value[i] - 'A';
+                    action.Col = value[i] - 'A';
                     break;
                 }
                 else if (std::islower(value[i]))
                 {
-                    action._Col = value[i] - 'a';
+                    action.Col = value[i] - 'a';
                     break;
                 }
-            if (action._Col == static_cast<unsigned char>(-1))
+            if (action.Col == static_cast<unsigned char>(-1))
                 return is;
             for (size_t i = 0; i < value.size(); ++i)
                 if (std::isdigit(value[i]))
                 {
-                    action._Row = std::stoi(value.substr(i));
-                    --action._Row;
+                    action.Row = std::stoi(value.substr(i));
+                    --action.Row;
                     break;
                 }
             return is;
         }
         inline friend std::ostream &operator<<(std::ostream &os, Action action)
         {
-            os << static_cast<char>(action._Col + 'A') << action._Row + 1;
+            os << static_cast<char>(action.Col + 'A') << action.Row + 1;
             return os;
         }
     };
-
-    class ActionIterator
-    {
-        friend class Gobang;
-
-    private:
-        const Gobang *_Game = nullptr;
-        Action _Action;
-        inline explicit ActionIterator() = default;
-        inline explicit ActionIterator(const Gobang *game) : _Game(game) { ++*this; }
-
-    public:
-        inline bool operator!=(ActionIterator) const { return _Action._Row < Size; }
-        inline Action operator*() const { return _Action; }
-        void operator++()
-        {
-            while (true)
-            {
-                ++_Action._Col;
-                if (_Action._Col == Size)
-                {
-                    _Action._Col = 0;
-                    ++_Action._Row;
-                }
-                if (_Action._Row >= Size)
-                    break;
-                if (_Game->_MoveCount == 0 || _Game->_Available[_Action._Row][_Action._Col])
-                    break;
-            }
-        }
-    };
-
-    inline ActionIterator begin() const { return ActionIterator(this); }
-    inline ActionIterator end() const { return ActionIterator(); }
 
     inline explicit Gobang()
     {
@@ -119,21 +83,16 @@ public:
     inline unsigned int GetNextPlayer() const { return _NextPlayer; }
     inline bool IsValid(Action action) const
     {
-        return action._Row < Size && action._Col < Size && _Board[action._Row][action._Col] == 2;
+        return action.Row < Size && action.Col < Size && _Board[action.Row][action.Col] == 2;
     }
     inline std::optional<Result> GetResult() const { return _Result; }
+    inline const Board &GetBoard() const { return _Board; }
+    inline unsigned int GetMoveCount() const { return _MoveCount; }
 
     void operator()(Action action)
     {
         assert(IsValid(action));
-        _Board[action._Row][action._Col] = _NextPlayer;
-        unsigned char xbegin = std::max(0, action._Row - 1);
-        unsigned char xend = std::min(Size - 1, action._Row + 1);
-        unsigned char ybegin = std::max(0, action._Col - 1);
-        unsigned char yend = std::min(Size - 1, action._Col + 1);
-        for (auto x = xbegin; x <= xend; ++x)
-            for (auto y = ybegin; y <= yend; ++y)
-                _Available[x][y] = _Board[x][y] == 2;
+        _Board[action.Row][action.Col] = _NextPlayer;
         ++_MoveCount;
         constexpr std::array<signed char, 4> DX = {0, 1, 1, 1};
         constexpr std::array<signed char, 4> DY = {1, 0, 1, -1};
@@ -141,7 +100,7 @@ public:
         for (unsigned char dire = 0; dire < 4; ++dire)
         {
             unsigned char count = 0;
-            auto x = action._Row, y = action._Col;
+            auto x = action.Row, y = action.Col;
             while (true)
             {
                 x += DX[dire], y += DY[dire];
@@ -158,7 +117,7 @@ public:
             }
             if (win)
                 break;
-            x = action._Row, y = action._Col;
+            x = action.Row, y = action.Col;
             while (true)
             {
                 x -= DX[dire], y -= DY[dire];

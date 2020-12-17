@@ -15,8 +15,8 @@
 #include "../../Utilities/ThreadSafeQueue.hpp"
 #include "../../Utilities/StaticMemoryPool.hpp"
 
-template <typename Game, unsigned int TimeLimit, unsigned long long MemoryLimit, unsigned int WorkerLimit,
-          typename Ratio = std::ratio<14, 10>, typename Rollout = RandomPlayer<Game>>
+template <typename Game, typename ActGen, unsigned int TimeLimit, unsigned long long MemoryLimit, unsigned int WorkerLimit,
+          typename Ratio = std::ratio<14, 10>, typename Rollout = RandomPlayer<Game, ActGen>>
 class ParallelMCTS
 {
     static_assert(TimeLimit > 0);
@@ -44,22 +44,26 @@ private:
 
     private:
         Node *_Parent = nullptr;
+        Action _Action;
         std::vector<UniquePtr<Node>> _Children;
         UniquePtr<Game> _Game;
+        UniquePtr<ActGen> _ActGen;
         unsigned int _NextPlayer;
-        Action _Action;
         std::array<double, PlayerCount> _Value{};
         unsigned int _Count = 0, _Working = 0;
 
     public:
-        inline explicit Node(const Game &game)
-            : _Game(StaticMemoryPool<Game>::make_unique(game)), _NextPlayer(game.GetNextPlayer()) {}
-        inline explicit Node(const Game &game, Action action, Node &parent)
-            : _Parent(&parent), _Game(StaticMemoryPool<Game>::make_unique(game)),
-              _NextPlayer(game.GetNextPlayer()), _Action(action) {}
+        inline explicit Node(const Game &game, const ActGen &actGen)
+            : _Game(StaticMemoryPool<Game>::make_unique(game)),
+              _ActGen(StaticMemoryPool<ActGen>::make_unique(actGen)),
+              _NextPlayer(game.GetNextPlayer()) {}
+        inline explicit Node(UniquePtr<Game> game, UniquePtr<ActGen> actGen, Action action, Node &parent)
+            : _Parent(&parent), _Action(action), _Game(std::move(game)),
+              _ActGen(std::move(actGen)), _NextPlayer(_Game->GetNextPlayer()) {}
     };
 
     const Game *_Game;
+    ActGen _ActGen;
 
     UniquePtr<Node> _Root;
     mutable std::mutex _RootMtx;
@@ -78,7 +82,7 @@ private:
     {
         if (ActualMemoryLimit == 0)
             return true;
-        return StaticMemoryPool<Node>::size() + StaticMemoryPool<Game>::size() < ActualMemoryLimit;
+        return StaticMemoryPool<Node>::size() + StaticMemoryPool<Game>::size() + StaticMemoryPool<ActGen>::size() < ActualMemoryLimit;
     }
 
     void Prune()
@@ -94,13 +98,14 @@ private:
                     break;
                 _RootCV.wait(rootLock);
             }
-            while (!_ActionQueue.IsEmpty())
+            if (!_ActionQueue.IsEmpty())
             {
                 auto action = _ActionQueue.Pop();
+                _ActGen.Notify(action);
                 auto pred = [action](const UniquePtr<Node> &x) { return x->_Action == action; };
                 auto iter = std::find_if(_Root->_Children.begin(), _Root->_Children.end(), pred);
                 if (iter == _Root->_Children.end())
-                    _Root = StaticMemoryPool<Node>::make_unique(*_Game);
+                    _Root = StaticMemoryPool<Node>::make_unique(*_Game, _ActGen);
                 else
                     _Root = std::move(*iter);
             }
@@ -121,7 +126,7 @@ private:
                     break;
                 _RootCV.wait(rootLock);
             }
-            while (_RolloutQueue.GetSize() < WorkerLimit)
+            if (_RolloutQueue.GetSize() < WorkerLimit)
             {
                 ++_Pending;
                 // Selection
@@ -160,16 +165,20 @@ private:
                 // Expansion
                 if (p->_Count != 0 && !p->_Game->GetResult())
                 {
-                    for (auto act : *p->_Game)
+                    for (auto act : *p->_ActGen)
                     {
-                        auto game = *p->_Game;
-                        game(act);
-                        auto node = StaticMemoryPool<Node>::make_unique(game, act, *p);
+                        auto game = StaticMemoryPool<Game>::make_unique(*p->_Game);
+                        auto actGen = StaticMemoryPool<ActGen>::make_unique(*p->_ActGen);
+                        actGen->SetGame(*game);
+                        (*game)(act);
+                        actGen->Notify(act);
+                        auto node = StaticMemoryPool<Node>::make_unique(std::move(game), std::move(actGen), act, *p);
                         p->_Children.push_back(std::move(node));
                     }
                     assert(p->_Children.size() > 0);
                     p->_Children.shrink_to_fit();
                     p->_Game = nullptr;
+                    p->_ActGen = nullptr;
                     p = p->_Children[0].get();
                 }
                 _RolloutQueue.Push({p, *p->_Game});
@@ -200,6 +209,7 @@ private:
             {
                 auto act = roll();
                 game(act);
+                roll.Notify(act);
                 value = game.GetResult();
             }
             _ResultQueue.Push({p, *value});
@@ -232,7 +242,7 @@ private:
 
 public:
     inline explicit ParallelMCTS(const Game &game)
-        : _Game(&game), _Root(StaticMemoryPool<Node>::make_unique(game))
+        : _Game(&game), _ActGen(game), _Root(StaticMemoryPool<Node>::make_unique(*_Game, _ActGen))
     {
         _TPrune = std::thread([this] { Prune(); });
         _TSelExp = std::thread([this] { SelectAndExpand(); });

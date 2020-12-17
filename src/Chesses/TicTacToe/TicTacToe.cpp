@@ -1,73 +1,56 @@
 #include "TicTacToe.hpp"
 #include <string>
-#include <cassert>
 #include <cctype>
+#include <cassert>
 
 std::istream &operator>>(std::istream &is, TicTacToe::Action &action)
 {
     std::string value;
     std::getline(is, value);
-    action._Row = action._Col = -1;
+    action.Row = action.Col = -1;
     for (size_t i = 0; i < value.size(); ++i)
         if (std::isupper(value[i]))
         {
-            action._Col = value[i] - 'A';
+            action.Col = value[i] - 'A';
             break;
         }
         else if (std::islower(value[i]))
         {
-            action._Col = value[i] - 'a';
+            action.Col = value[i] - 'a';
             break;
         }
-    if (action._Col == static_cast<unsigned char>(-1))
+    if (action.Col == static_cast<unsigned char>(-1))
         return is;
     for (size_t i = 0; i < value.size(); ++i)
         if (std::isdigit(value[i]))
         {
-            action._Row = std::stoi(value.substr(i));
-            --action._Row;
+            action.Row = std::stoi(value.substr(i));
+            --action.Row;
             break;
         }
     return is;
 }
 
-void TicTacToe::ActionIterator::operator++()
-{
-    while (true)
-    {
-        ++_Action._Col;
-        if (_Action._Col == 3)
-        {
-            _Action._Col = 0;
-            ++_Action._Row;
-        }
-        if (_Action._Row >= 3)
-            break;
-        if (_Game->_Board[_Action._Row][_Action._Col] == 2)
-            break;
-    }
-}
-
 void TicTacToe::operator()(Action action)
 {
     assert(IsValid(action));
-    _Board[action._Row][action._Col] = _NextPlayer;
+    _Board[action.Row][action.Col] = _NextPlayer;
     ++_MoveCount;
     // Row
-    bool win = _Board[action._Row][0] == _NextPlayer &&
-               _Board[action._Row][1] == _NextPlayer &&
-               _Board[action._Row][2] == _NextPlayer;
+    bool win = _Board[action.Row][0] == _NextPlayer &&
+               _Board[action.Row][1] == _NextPlayer &&
+               _Board[action.Row][2] == _NextPlayer;
     // Col
-    win = win || (_Board[0][action._Col] == _NextPlayer &&
-                  _Board[1][action._Col] == _NextPlayer &&
-                  _Board[2][action._Col] == _NextPlayer);
+    win = win || (_Board[0][action.Col] == _NextPlayer &&
+                  _Board[1][action.Col] == _NextPlayer &&
+                  _Board[2][action.Col] == _NextPlayer);
     // Main diagonal
-    win = win || (action._Row == action._Col &&
+    win = win || (action.Row == action.Col &&
                   _Board[0][0] == _NextPlayer &&
                   _Board[1][1] == _NextPlayer &&
                   _Board[2][2] == _NextPlayer);
     // Counter diagonal
-    win = win || (action._Row + action._Col == 2 &&
+    win = win || (action.Row + action.Col == 2 &&
                   _Board[0][2] == _NextPlayer &&
                   _Board[1][1] == _NextPlayer &&
                   _Board[2][0] == _NextPlayer);
@@ -97,9 +80,11 @@ std::ostream &operator<<(std::ostream &os, const TicTacToe &game)
         os << i + 1 << ' ';
         for (unsigned char j = 0; j < 3; ++j)
             if (game._Board[i][j] == 0)
-                os << "○ ";
+                // os << "○ ";
+                os << "* ";
             else if (game._Board[i][j] == 1)
-                os << "● ";
+                // os << "● ";
+                os << "@ ";
             else
                 os << "  ";
         os << i + 1 << '\n';

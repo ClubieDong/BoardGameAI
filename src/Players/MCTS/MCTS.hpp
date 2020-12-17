@@ -11,8 +11,8 @@
 #include <type_traits>
 #include "../RandomPlayer/RandomPlayer.hpp"
 
-template <typename Game, unsigned int Iterations, typename Ratio = std::ratio<14, 10>,
-          typename Rollout = RandomPlayer<Game>>
+template <typename Game, typename ActGen, unsigned int Iterations, typename Ratio = std::ratio<14, 10>,
+          typename Rollout = RandomPlayer<Game, ActGen>>
 class MCTS
 {
     static_assert(Iterations > 0);
@@ -34,37 +34,40 @@ private:
 
     private:
         Node *_Parent = nullptr;
+        Action _Action;
         std::vector<std::unique_ptr<Node>> _Children;
         std::unique_ptr<Game> _Game;
+        std::unique_ptr<ActGen> _ActGen;
         unsigned int _NextPlayer;
-        Action _Action;
         std::array<double, PlayerCount> _Value{};
         unsigned int _Count = 0;
 
     public:
-        inline explicit Node() = default;
-        inline explicit Node(const Game &game)
-            : _Game(std::make_unique<Game>(game)), _NextPlayer(game.GetNextPlayer()) {}
-        inline explicit Node(const Game &game, Action action, Node &parent)
-            : _Parent(&parent), _Game(std::make_unique<Game>(game)),
-              _NextPlayer(game.GetNextPlayer()), _Action(action) {}
+        inline explicit Node(const Game &game, const ActGen &actGen)
+            : _Game(std::make_unique<Game>(game)),
+              _ActGen(std::make_unique<ActGen>(actGen)),
+              _NextPlayer(_Game->GetNextPlayer()) {}
+        inline explicit Node(std::unique_ptr<Game> game, std::unique_ptr<ActGen> actGen, Action action, Node &parent)
+            : _Parent(&parent), _Action(action), _Game(std::move(game)),
+              _ActGen(std::move(actGen)), _NextPlayer(_Game->GetNextPlayer()) {}
     };
 
     const Game *_Game;
+    ActGen _ActGen;
 
 public:
-    inline explicit MCTS(const Game &game) : _Game(&game) {}
-    inline explicit MCTS(const Game &game, const std::vector<Action> &) : _Game(&game) {}
+    inline explicit MCTS(const Game &game) : _Game(&game), _ActGen(game) {}
+    inline explicit MCTS(const Game &game, const std::vector<Action> &) : MCTS(game) {}
 
     MCTS(const MCTS &) = delete;
     MCTS &operator=(const MCTS &) = delete;
     inline MCTS(MCTS &&) = default;
     inline MCTS &operator=(MCTS &&) = default;
 
-    inline void Notify(Action) const {}
+    inline void Notify(Action act) { _ActGen.Notify(act); }
     Action operator()()
     {
-        Node root(*_Game);
+        Node root(*_Game, _ActGen);
         for (unsigned int iter = 0; iter < Iterations; ++iter)
         {
             // Selection
@@ -99,15 +102,19 @@ public:
             // Expansion
             if (p->_Count != 0 && !p->_Game->GetResult())
             {
-                for (auto act : *p->_Game)
+                for (auto act : *p->_ActGen)
                 {
-                    auto game = *p->_Game;
-                    game(act);
-                    auto node = std::make_unique<Node>(game, act, *p);
+                    auto game = std::make_unique<Game>(*p->_Game);
+                    auto actGen = std::make_unique<ActGen>(*p->_ActGen);
+                    actGen->SetGame(*game);
+                    (*game)(act);
+                    actGen->Notify(act);
+                    auto node = std::make_unique<Node>(std::move(game), std::move(actGen), act, *p);
                     p->_Children.push_back(std::move(node));
                 }
                 assert(p->_Children.size() > 0);
                 p->_Game = nullptr;
+                p->_ActGen = nullptr;
                 p = p->_Children[0].get();
             }
             // Rollout
@@ -118,6 +125,7 @@ public:
             {
                 auto act = roll();
                 game(act);
+                roll.Notify(act);
                 value = game.GetResult();
             }
             // Back propagation

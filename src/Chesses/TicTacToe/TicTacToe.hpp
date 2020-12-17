@@ -9,51 +9,34 @@ class TicTacToe
 public:
     inline static constexpr unsigned int PlayerCount = 2;
     using Result = std::array<double, 2>;
+    using Board = std::array<std::array<unsigned char, 3>, 3>;
 
 private:
     // 0: Player1; 1: Player2; 2: Empty
-    std::array<std::array<unsigned char, 3>, 3> _Board;
+    Board _Board;
     unsigned int _NextPlayer = 0, _MoveCount = 0;
     std::optional<Result> _Result;
 
 public:
     class Action
     {
-        friend class TicTacToe;
-        friend class ActionIterator;
-
-    private:
-        unsigned char _Row = 0, _Col = -1;
-        inline explicit Action(unsigned char row, unsigned char col) : _Row(row), _Col(col) {}
-
     public:
+        unsigned char Row = 0, Col = -1;
+
         inline explicit Action() = default;
+        inline explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
+
+        inline friend bool operator==(Action lhs, Action rhs)
+        {
+            return lhs.Row == rhs.Row && lhs.Col == rhs.Col;
+        }
         friend std::istream &operator>>(std::istream &is, Action &action);
         inline friend std::ostream &operator<<(std::ostream &os, Action action)
         {
-            os << static_cast<char>(action._Col + 'A') << action._Row + 1;
+            os << static_cast<char>(action.Col + 'A') << action.Row + 1;
             return os;
         }
     };
-
-    class ActionIterator
-    {
-        friend class TicTacToe;
-
-    private:
-        const TicTacToe *_Game = nullptr;
-        Action _Action;
-        inline explicit ActionIterator() = default;
-        inline explicit ActionIterator(const TicTacToe *game) : _Game(game) { ++*this; }
-
-    public:
-        inline bool operator!=(ActionIterator) const { return _Action._Row < 3; }
-        inline Action operator*() const { return _Action; }
-        void operator++();
-    };
-
-    inline ActionIterator begin() const { return ActionIterator(this); }
-    inline ActionIterator end() const { return ActionIterator(); }
 
     inline explicit TicTacToe()
     {
@@ -64,9 +47,10 @@ public:
     inline unsigned int GetNextPlayer() const { return _NextPlayer; }
     inline bool IsValid(Action action) const
     {
-        return action._Row < 3 && action._Col < 3 && _Board[action._Row][action._Col] == 2;
+        return action.Row < 3 && action.Col < 3 && _Board[action.Row][action.Col] == 2;
     }
     inline std::optional<Result> GetResult() const { return _Result; }
+    inline const Board &GetBoard() const { return _Board; }
 
     void operator()(Action action);
     friend std::ostream &operator<<(std::ostream &os, const TicTacToe &game);
