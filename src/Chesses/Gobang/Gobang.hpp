@@ -9,11 +9,12 @@
 #include <cctype>
 #include <bitset>
 
-template <unsigned char _Size = 15, unsigned char Renju = 5>
+template <unsigned char _Size = 15, unsigned char _Renju = 5>
 class Gobang
 {
 public:
     inline static constexpr unsigned char Size = _Size;
+    inline static constexpr unsigned char Renju = _Renju;
     inline static constexpr unsigned int PlayerCount = 2;
     using Result = std::array<double, 2>;
     using Board = std::array<std::array<unsigned char, Size>, Size>;

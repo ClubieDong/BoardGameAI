@@ -107,7 +107,10 @@ private:
                 if (iter == _Root->_Children.end())
                     _Root = StaticMemoryPool<Node>::make_unique(*_Game, _ActGen);
                 else
-                    _Root = std::move(*iter);
+                {
+                    auto t = std::move(*iter);
+                    _Root = std::move(t);
+                }
             }
             _RootCV.notify_all();
         }

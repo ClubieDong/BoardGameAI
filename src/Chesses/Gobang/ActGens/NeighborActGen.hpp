@@ -34,6 +34,15 @@ namespace gobang
             inline Action operator*() const { return _Action; }
             void operator++()
             {
+                if (_ActGen->_Game->GetMoveCount() == 0)
+                {
+                    // First step, go H8
+                    if (_Action.Row == 0)
+                        _Action.Row = _Action.Col = 7;
+                    else if (_Action.Row == 7)
+                        _Action.Row = Size;
+                    return;
+                }
                 while (true)
                 {
                     ++_Action.Col;
