@@ -1,11 +1,11 @@
-# ChessAI
-Multiple AIs (MCTS, etc.) for multiple chesses (Gobang, etc.)
+# BoardGameAI
+Multiple AIs (MCTS, etc.) for multiple games (Gobang, etc.)
 
 ## Introduction
-This project is consisted of two decoupled part: 1) Chess, and 2) Player.
+This project is consisted of two decoupled part: 1) Game, and 2) Player.
 
-## Chesses
-For each chess, one or more action genreators is written, which generates valid actions on a certain state of the game.
+## Gamess
+For each game, one or more action genreators is written, which generates valid actions on a certain state of the game.
 
 ### Gobang
 

@@ -1,6 +1,6 @@
 #include "Controller.hpp"
-#include "Chesses/Gobang/Gobang.hpp"
-#include "Chesses/Gobang/ActGens/SmartActGen.hpp"
+#include "Games/Gobang/Gobang.hpp"
+#include "Games/Gobang/ActGens/SmartActGen.hpp"
 #include "Players/HumanPlayer/HumanPlayer.hpp"
 #include "Players/MCTS/ParallelMCTS.hpp"
 #include "Utilities/Literals.hpp"

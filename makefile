@@ -15,7 +15,7 @@
 CC = g++
 
 # Executable name
-EXEC_NAME = ChessAI
+EXEC_NAME = BoardGameAI
 
 # Where to search for source code
 SRC = src
