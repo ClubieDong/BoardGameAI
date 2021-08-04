@@ -1,21 +1,26 @@
 #include "DefaultActGen.hpp"
+#include <cassert>
 
 namespace tictactoe
 {
-    void DefaultActGen::ActionIterator::operator++()
+    bool DefaultActGen::NextAction(const ActGenDataBase *, ActionBase &_act) const
     {
-        while (true)
+        // Assert and convert polymorphic types
+        assert(_act.GetGameType() == GameType::TicTacToe);
+        auto &act = dynamic_cast<Action &>(_act);
+        auto &state = *dynamic_cast<const State *>(_State);
+
+        do
         {
-            ++_Action.Col;
-            if (_Action.Col == 3)
+            ++act._Col;
+            if (act._Col >= 3)
             {
-                _Action.Col = 0;
-                ++_Action.Row;
+                ++act._Row;
+                act._Col = 0;
             }
-            if (_Action.Row >= 3)
-                break;
-            if (_ActGen->_Game->GetBoard()[_Action.Row][_Action.Col] == 2)
-                break;
-        }
+            if (act._Row >= 3)
+                return false;
+        } while (state._Board[act._Row][act._Col] != 2);
+        return true;
     }
-} // namespace tictactoe
+}

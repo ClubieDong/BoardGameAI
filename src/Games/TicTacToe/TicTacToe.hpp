@@ -1,57 +1,63 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <optional>
-#include <iostream>
+#include <vector>
+#include "../GameBase.hpp"
 
-class TicTacToe
+class TicTacToe;
+
+namespace tictactoe
 {
-public:
-    inline static constexpr unsigned int PlayerCount = 2;
-    using Result = std::array<double, 2>;
-    using Board = std::array<std::array<unsigned char, 3>, 3>;
-
-private:
-    // 0: Player1; 1: Player2; 2: Empty
-    Board _Board;
-    unsigned int _NextPlayer = 0, _MoveCount = 0;
-    std::optional<Result> _Result;
-
-public:
-    class Action
+    class State : public StateBase
     {
+        friend class ::TicTacToe;
+        friend class DefaultActGen;
+
+    protected:
+        std::array<std::array<unsigned char, 3>, 3> _Board;
+        unsigned char _MoveCount = 0;
+
     public:
-        unsigned char Row = 0, Col = -1;
-
-        inline explicit Action() = default;
-        inline explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
-
-        inline friend bool operator==(Action lhs, Action rhs)
+        State() : StateBase(0)
         {
-            return lhs.Row == rhs.Row && lhs.Col == rhs.Col;
+            for (auto &row : _Board)
+                row.fill(2);
         }
-        friend std::istream &operator>>(std::istream &is, Action &action);
-        inline friend std::ostream &operator<<(std::ostream &os, Action action)
-        {
-            os << static_cast<char>(action.Col + 'A') << action.Row + 1;
-            return os;
-        }
+
+        virtual GameType GetGameType() const final override { return GameType::TicTacToe; }
     };
 
-    inline explicit TicTacToe()
+    class Action : public ActionBase
     {
-        for (auto &i : _Board)
-            i.fill(2);
-    }
+        friend class ::TicTacToe;
+        friend class DefaultActGen;
 
-    inline unsigned int GetNextPlayer() const { return _NextPlayer; }
-    inline bool IsValid(Action action) const
+    protected:
+        unsigned char _Row = 0, _Col = -1;
+
+        virtual GameType GetGameType() const final override { return GameType::TicTacToe; }
+
+        virtual std::unique_ptr<ActionBase> Clone() const final override
+        {
+            return std::make_unique<Action>(*this);
+        }
+    };
+}
+
+class TicTacToe : public GameBase
+{
+public:
+    TicTacToe() : GameBase(2) {}
+
+    virtual GameType GetGameType() const final override { return GameType::TicTacToe; }
+
+    virtual bool IsValidAction(const StateBase &state, const ActionBase &act) const final override;
+
+    virtual std::unique_ptr<StateBase> NewState() const final override
     {
-        return action.Row < 3 && action.Col < 3 && _Board[action.Row][action.Col] == 2;
+        return std::make_unique<tictactoe::State>();
     }
-    inline std::optional<Result> GetResult() const { return _Result; }
-    inline const Board &GetBoard() const { return _Board; }
-
-    void operator()(Action action);
-    friend std::ostream &operator<<(std::ostream &os, const TicTacToe &game);
+    virtual std::optional<std::vector<double>> Move(StateBase &state, const ActionBase &act) const final override;
 };

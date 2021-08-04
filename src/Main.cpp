@@ -1,17 +1,22 @@
+#include <memory>
+#include "Games/TicTacToe/TicTacToe.hpp"
+#include "Games/TicTacToe/ActGens/DefaultActGen.hpp"
+#include "Players/RandomPlayer/RandomPlayer.hpp"
 #include "Controller.hpp"
-#include "Games/Gobang/Gobang.hpp"
-#include "Games/Gobang/ActGens/SmartActGen.hpp"
-#include "Players/HumanPlayer/HumanPlayer.hpp"
-#include "Players/MCTS/ParallelMCTS.hpp"
-#include "Utilities/Literals.hpp"
+
+// DEBUG
+#include <iostream>
 
 int main()
 {
-    using Game = Gobang<15, 5>;
-    using Player1 = HumanPlayer<Game>;
-    using Player2 = ParallelMCTS<Game, gobang::SmartActGen<Game, 1>, 15_sec, 15_GB, 12>;
-    Controller<Game, Player1, Player2> controller;
-    auto result = controller.Start();
-    std::cout << "Game over! " << result[0] << ':' << result[1] << '\n';
+    auto game = std::make_unique<TicTacToe>();
+    std::vector<std::unique_ptr<PlayerBase>> players(2);
+    players[0] = std::make_unique<RandomPlayer>(
+        std::make_unique<tictactoe::DefaultActGen>());
+    players[1] = std::make_unique<RandomPlayer>(
+        std::make_unique<tictactoe::DefaultActGen>());
+    Controller controller(std::move(game), std::move(players));
+    auto res = controller.Start();
+    std::cout << res[0] << ':' << res[1] << '\n';
     return 0;
 }

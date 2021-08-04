@@ -37,7 +37,9 @@ INCLUDES =
 #Linker flags
 LDFLAGS = -lpthread
 # Compiler flags
-CFLAGS = -O3 -std=c++17 -Wall -Wextra -pedantic
+CFLAGS_DEBUG = -O0 -g
+CFLAGS_RELEASE = -O3 -DNDEBUG
+CFLAGS = $(CFLAGS_DEBUG) -std=c++17 -Wall -Wextra -pedantic
 # Libraries
 LIBS = 
 

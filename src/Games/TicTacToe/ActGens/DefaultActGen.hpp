@@ -1,41 +1,22 @@
 #pragma once
 
+#include <memory>
+#include "../../ActGenBase.hpp"
+#include "../../GameBase.hpp"
 #include "../TicTacToe.hpp"
 
 namespace tictactoe
 {
-    class DefaultActGen
+    class DefaultActGen : public ActGenBase
     {
     public:
-        using Action = TicTacToe::Action;
-
-    private:
-        const TicTacToe *_Game;
-
-    public:
-        class ActionIterator
+        virtual GameType GetGameType() const final override { return GameType::TicTacToe; }
+        virtual ActGenType GetActGenType() const final override { return ActGenType::TicTacToe_DefaultActGen; }
+        
+        virtual std::unique_ptr<ActionBase> NewAction() const final override
         {
-            friend class DefaultActGen;
-
-        private:
-            const DefaultActGen *_ActGen = nullptr;
-            Action _Action;
-            inline explicit ActionIterator() = default;
-            inline explicit ActionIterator(const DefaultActGen *actGen)
-                : _ActGen(actGen) { ++*this; }
-
-        public:
-            inline bool operator!=(ActionIterator) const { return _Action.Row < 3; }
-            inline Action operator*() const { return _Action; }
-            void operator++();
-        };
-
-        inline explicit DefaultActGen(const TicTacToe &game) : _Game(&game) {}
-
-        inline ActionIterator begin() const { return ActionIterator(this); }
-        inline ActionIterator end() const { return ActionIterator(); }
-
-        inline void SetGame(const TicTacToe &game) { _Game = &game; }
-        inline void Notify(Action) const {}
+            return std::make_unique<Action>();
+        }
+        virtual bool NextAction(const ActGenDataBase *data, ActionBase &act) const final override;
     };
-} // namespace tictactoe
+}
