@@ -1,0 +1,51 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Response",
+    "description": "Root schema for responses",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Same as in the corresponding request, may be empty when parsing fails, or it does not exist in request"
+        },
+        "success": {
+            "description": "Whether the request is successful",
+            "type": "boolean"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "id": {},
+                "success": {
+                    "const": true
+                },
+                "data": {
+                    "description": "Check the 'responses' folder for more information"
+                }
+            },
+            "required": [
+                "data"
+            ],
+            "additionalProperties": false
+        },
+        {
+            "properties": {
+                "id": {},
+                "success": {
+                    "const": false
+                },
+                "errMsg": {
+                    "description": "Error message, only exists on failure",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "errMsg"
+            ],
+            "additionalProperties": false
+        }
+    ],
+    "required": [
+        "success"
+    ]
+}

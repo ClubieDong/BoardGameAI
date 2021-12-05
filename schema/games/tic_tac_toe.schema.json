@@ -1,0 +1,7 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Tic-tac-toe Game",
+    "description": "Tic-tac-toe game schema",
+    "type": "object",
+    "additionalProperties": false
+}

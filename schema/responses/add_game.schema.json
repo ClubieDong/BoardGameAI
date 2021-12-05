@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddGame Response",
+    "type": "object",
+    "properties": {
+        "gameID": {
+            "description": "Game ID, used to identify this game in subsequent requests",
+            "$ref": "basic/id.schema.json"
+        }
+    },
+    "required": [
+        "gameID"
+    ],
+    "additionalProperties": false
+}

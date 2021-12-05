@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Echo Request",
+    "description": "Return the same data after sleeping for a specified period of time. Used for test",
+    "type": "object",
+    "properties": {
+        "time": {
+            "description": "Sleep time, in seconds",
+            "type": "integer",
+            "minimum": 0
+        },
+        "data": {
+            "description": "Anything to be echoed"
+        }
+    },
+    "required": [
+        "time"
+    ],
+    "additionalProperties": false
+}

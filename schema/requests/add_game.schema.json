@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddGame Request",
+    "description": "Add a game record",
+    "type": "object",
+    "properties": {
+        "type": {
+            "description": "Game type",
+            "type": "string",
+            "enum": [
+                "tic_tac_toe"
+            ]
+        },
+        "data": {
+            "description": "Check the 'games' folder for more information"
+        }
+    },
+    "required": [
+        "type",
+        "data"
+    ],
+    "additionalProperties": false
+}

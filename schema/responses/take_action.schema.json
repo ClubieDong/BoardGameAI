@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "TakeAction Response",
+    "type": "object",
+    "properties": {
+        "finished": {
+            "description": "Whether the state is finished",
+            "type": "boolean"
+        },
+        "state": {
+            "description": "State after the action is applied. Check the 'states' folder for more information"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "finished": {
+                    "const": true
+                }
+            },
+            "additionalProperties": false
+        },
+        {
+            "properties": {
+                "finished": {
+                    "const": false
+                },
+                "result": {
+                    "description": "Points earned by each player",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            },
+            "required": [
+                "result"
+            ],
+            "additionalProperties": false
+        }
+    ],
+    "required": [
+        "finished",
+        "state"
+    ]
+}

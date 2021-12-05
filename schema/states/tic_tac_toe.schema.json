@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Tic-tac-toe State",
+    "description": "Tic-tac-toe state schema",
+    "type": "object",
+    "properties": {
+        "board": {
+            "description": "3x3 board",
+            "$ref": "basic/board.schema.json"
+        }
+    },
+    "required": [
+        "board"
+    ],
+    "additionalProperties": false
+}

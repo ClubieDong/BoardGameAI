@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "GenerateActions Request",
+    "description": "Generate all valid actions using the specified action generator",
+    "type": "object",
+    "properties": {
+        "actionGeneratorID": {
+            "description": "Action generator ID, which is used to generate actions",
+            "$ref": "basic/id.schema.json"
+        }
+    },
+    "required": [
+        "actionGeneratorID"
+    ],
+    "additionalProperties": false
+}

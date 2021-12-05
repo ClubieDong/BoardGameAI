@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddState Request",
+    "description": "Add a state record",
+    "type": "object",
+    "properties": {
+        "gameID": {
+            "description": "The game ID to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "data": {
+            "description": "Check the 'states' folder for more information. If it is null, the default state is created"
+        }
+    },
+    "required": [
+        "gameID",
+        "data"
+    ],
+    "additionalProperties": false
+}

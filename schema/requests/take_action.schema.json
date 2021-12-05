@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "TakeAction Request",
+    "description": "Apply an action to the specified state",
+    "type": "object",
+    "properties": {
+        "stateID": {
+            "description": "State ID, to which the action is applied",
+            "$ref": "basic/id.schema.json"
+        },
+        "action": {
+            "description": "Action to be applied. Check the 'actions' folder for more information"
+        }
+    },
+    "required": [
+        "stateID",
+        "action"
+    ],
+    "additionalProperties": false
+}

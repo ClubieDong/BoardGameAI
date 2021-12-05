@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddActionGenerator Request",
+    "description": "Add an action generator record",
+    "type": "object",
+    "properties": {
+        "stateID": {
+            "description": "The state ID to which the action generator belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "type": {
+            "description": "Action generator type",
+            "type": "string",
+            "anyOf": [
+                {
+                    "description": "Action generators of tic-tac-toe",
+                    "enum": [
+                        "default"
+                    ]
+                }
+            ]
+        },
+        "data": {
+            "description": "Check the 'action_generators' folder for more information"
+        }
+    },
+    "required": [
+        "stateID",
+        "type",
+        "data"
+    ],
+    "additionalProperties": false
+}

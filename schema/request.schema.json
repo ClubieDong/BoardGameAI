@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Request",
+    "description": "Root schema for requests",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Specified by client, used to identify requests. The corresponding response will carry the same id"
+        },
+        "type": {
+            "description": "Type of the request",
+            "type": "string",
+            "enum": [
+                "echo",
+                "add_game",
+                "add_state",
+                "add_action_generator",
+                "generate_actions",
+                "take_action"
+            ]
+        },
+        "data": {
+            "description": "Check the 'requests' folder for more information"
+        }
+    },
+    "required": [
+        "type",
+        "data"
+    ],
+    "additionalProperties": false
+}

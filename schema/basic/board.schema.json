@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "2D-board State",
+    "description": "Abstract 2D-board schema",
+    "type": "array",
+    "items": {
+        "type": "array",
+        "items": {
+            "type": "integer",
+            "minimum": 0
+        }
+    }
+}

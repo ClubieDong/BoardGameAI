@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Tic-tac-toe Action",
+    "description": "Tic-tac-toe action schema",
+    "type": "object",
+    "properties": {
+        "row": {
+            "description": "Row",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2
+        },
+        "col": {
+            "description": "Column",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2
+        }
+    },
+    "required": [
+        "row",
+        "col"
+    ],
+    "additionalProperties": false
+}
