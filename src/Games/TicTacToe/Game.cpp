@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include <cassert>
 #include "../../Utilities/Utilities.hpp"
 
 namespace tic_tac_toe
@@ -25,6 +26,7 @@ namespace tic_tac_toe
     {
         auto &state = static_cast<State &>(_state);
         const auto &action = static_cast<const Action &>(_action);
+        assert(IsValidAction(state, action));
 
         const auto nextPlayer = (state.MoveCount & 1) + 1;
         state.Board[action.Row][action.Col] = nextPlayer;
@@ -40,11 +42,10 @@ namespace tic_tac_toe
         if (win)
         {
             std::optional<std::vector<double>> res(std::in_place, 2, 0.0);
-            (*res)[nextPlayer] = 1.0;
+            (*res)[nextPlayer - 1] = 1.0;
             return res;
         }
-        else if (state.MoveCount == 9)
-            // Draw
+        if (state.MoveCount == 9) // Draw
             return std::optional<std::vector<double>>(std::in_place, 2, 0.5);
         return std::nullopt;
     }

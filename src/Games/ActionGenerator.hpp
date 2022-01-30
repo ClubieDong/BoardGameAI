@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <cassert>
 #include <nlohmann/json.hpp>
 
 class Game;
@@ -19,6 +20,8 @@ public:
     };
 
     virtual ~ActionGenerator() = default;
+    // This function should not return a null pointer,
+    // because every valid state must have at least one action.
     virtual std::unique_ptr<Action> FirstAction(const Data &data) const = 0;
     virtual bool NextAction(const Data &data, Action &action) const = 0;
 
@@ -26,6 +29,7 @@ public:
     void ForEach(const Data &data, Func func) const
     {
         auto action = FirstAction(data);
+        assert(action);
         do
             func(*action);
         while (NextAction(data, *action));

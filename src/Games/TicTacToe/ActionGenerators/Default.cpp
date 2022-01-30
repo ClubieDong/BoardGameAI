@@ -1,4 +1,5 @@
 #include "Default.hpp"
+#include <cassert>
 #include "../../../Utilities/Utilities.hpp"
 #include "../../Game.hpp"
 
@@ -13,7 +14,8 @@ namespace tic_tac_toe::action_generator
     std::unique_ptr<::Action> Default::FirstAction(const ::ActionGenerator::Data &data) const
     {
         auto action = std::make_unique<Action>(0, -1);
-        NextAction(data, *action);
+        const auto isValid = NextAction(data, *action);
+        assert(isValid);
         return action;
     }
 }
