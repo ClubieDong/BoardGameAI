@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddPlayer Request",
+    "description": "Add a player record",
+    "type": "object",
+    "properties": {
+        "stateID": {
+            "description": "The state ID to which the player belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "type": {
+            "description": "Player type",
+            "$ref": "players/types.schema.json"
+        },
+        "data": {
+            "description": "Check the 'players' folder for more information"
+        }
+    },
+    "required": [
+        "stateID",
+        "type",
+        "data"
+    ],
+    "additionalProperties": false
+}

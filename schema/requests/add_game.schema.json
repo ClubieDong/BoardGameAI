@@ -6,10 +6,7 @@
     "properties": {
         "type": {
             "description": "Game type",
-            "type": "string",
-            "enum": [
-                "tic_tac_toe"
-            ]
+            "$ref": "games/types.schema.json"
         },
         "data": {
             "description": "Check the 'games' folder for more information"

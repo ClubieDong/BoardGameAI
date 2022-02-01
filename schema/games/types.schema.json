@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Game types",
+    "description": "Game type",
+    "type": "string",
+    "enum": [
+        "tic_tac_toe"
+    ]
+}

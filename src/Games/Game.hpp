@@ -29,5 +29,5 @@ public:
     // TODO: Small vector optimization
     virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0;
 
-    static std::unique_ptr<Game> Create(const nlohmann::json &data);
+    static std::unique_ptr<Game> Create(const std::string &type, const nlohmann::json &data);
 };

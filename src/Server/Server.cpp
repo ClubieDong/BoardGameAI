@@ -12,6 +12,7 @@ const std::unordered_map<std::string, nlohmann::json (Server::*)(const nlohmann:
     {"echo", &Server::Echo},
     {"add_game", &Server::AddGame},
     {"add_state", &Server::AddState},
+    {"add_player", &Server::AddPlayer},
     {"add_action_generator", &Server::AddActionGenerator},
     {"generate_actions", &Server::GenerateActions},
     {"take_action", &Server::TakeAction},
@@ -56,7 +57,8 @@ nlohmann::json Server::Echo(const nlohmann::json &data) {
 
 nlohmann::json Server::AddGame(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_game.schema.json").validate(data);
-    auto game = Game::Create(data);
+    const std::string &type = data["type"];
+    auto game = Game::Create(type, data["data"]);
     unsigned int id;
     {
         const std::scoped_lock lock(_MtxGameList);
@@ -88,6 +90,27 @@ nlohmann::json Server::AddState(const nlohmann::json &data) {
     return {{"stateID", id}};
 }
 
+nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
+    Util::GetJsonValidator("requests/add_player.schema.json").validate(data);
+    const std::string &type = data["type"];
+    auto &state = GetState(data["stateID"]);
+    const auto &game = *state.ParentGame;
+    auto player = Player::Create(type, *game.GamePtr, *state.StatePtr, data["data"]);
+    unsigned int id;
+    PlayerRecord *recordPtr;
+    {
+        const std::scoped_lock lock(_MtxPlayerList);
+        id = ++_PlayerCount;
+        recordPtr = &_PlayerList.try_emplace(id, std::move(player), &state).first->second;
+    }
+    // Data race may occur here (`state` being removed), but it is the client's responsibility to avoid that.
+    {
+        const std::scoped_lock lock(state.MtxRecord);
+        state.SubPlayers.push_back(recordPtr);
+    }
+    return {{"playerID", id}};
+}
+
 nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_action_generator.schema.json").validate(data);
     const std::string &type = data["type"];
@@ -104,6 +127,7 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
             &_ActionGeneratorList.try_emplace(id, std::move(actionGenerator), std::move(actionGeneratorData), &state)
                  .first->second;
     }
+    // Data race may occur here (`state` being removed), but it is the client's responsibility to avoid that.
     {
         const std::scoped_lock lock(state.MtxRecord);
         state.SubActionGenerators.push_back(recordPtr);

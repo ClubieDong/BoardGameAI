@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "AddPlayer Response",
+    "type": "object",
+    "properties": {
+        "playerID": {
+            "description": "Player ID, used to identify this player in subsequent requests",
+            "$ref": "basic/id.schema.json"
+        }
+    },
+    "required": [
+        "playerID"
+    ],
+    "additionalProperties": false
+}

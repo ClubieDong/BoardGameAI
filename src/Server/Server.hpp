@@ -45,8 +45,13 @@ private:
     };
 
     struct PlayerRecord {
-        std::unique_ptr<Player> PlayerPtr;
-        StateRecord *ParentState;
+        // Used to lock the `Player` object;
+        mutable std::mutex MtxPlayer; // TODO: shared_mutex? TODO: Do I Need this?
+        const std::unique_ptr<Player> PlayerPtr;
+        const StateRecord *ParentState;
+
+        explicit PlayerRecord(std::unique_ptr<Player> &&playerPtr, StateRecord *parentState)
+            : PlayerPtr(std::move(playerPtr)), ParentState(parentState) {}
     };
 
     struct ActionGeneratorRecord {
@@ -99,6 +104,7 @@ private:
     nlohmann::json Echo(const nlohmann::json &data);
     nlohmann::json AddGame(const nlohmann::json &data);
     nlohmann::json AddState(const nlohmann::json &data);
+    nlohmann::json AddPlayer(const nlohmann::json &data);
     nlohmann::json AddActionGenerator(const nlohmann::json &data);
     nlohmann::json GenerateActions(const nlohmann::json &data);
     nlohmann::json TakeAction(const nlohmann::json &data);

@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Player types",
+    "description": "Player type",
+    "type": "string",
+    "enum": [
+        "random_move"
+    ]
+}

@@ -3,6 +3,7 @@
 #include "TicTacToe/ActionGenerators/Default.hpp"
 #include "TicTacToe/Game.hpp"
 #include <typeindex>
+#include <unordered_map>
 
 template <typename T>
 static std::unique_ptr<ActionGenerator::Data> CreateActionGeneratorData() {

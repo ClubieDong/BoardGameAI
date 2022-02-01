@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Random move player",
+    "description": "Random move player schema",
+    "type": "object",
+    "properties": {
+        "actionGenerator": {
+            "description": "Used to generate random actions",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "Action generator type",
+                    "$ref": "action_generators/types.schema.json"
+                },
+                "data": {
+                    "description": "Check the 'action_generators' folder for more information"
+                }
+            },
+            "required": [
+                "type",
+                "data"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "actionGenerator"
+    ],
+    "additionalProperties": false
+}

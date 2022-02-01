@@ -61,10 +61,7 @@ std::unique_ptr<Action> Action::Create(const Game &game, const nlohmann::json &d
     return creator(data);
 }
 
-std::unique_ptr<Game> Game::Create(const nlohmann::json &data) {
-    // `data` has been validated in caller
-    const std::string &type = data["type"];
-    const nlohmann::json &gameData = data["data"];
+std::unique_ptr<Game> Game::Create(const std::string &type, const nlohmann::json &data) {
     const auto creator = GameCreatorMap.at(type);
-    return creator(gameData);
+    return creator(data);
 }

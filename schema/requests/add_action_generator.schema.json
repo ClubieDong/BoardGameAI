@@ -10,15 +10,7 @@
         },
         "type": {
             "description": "Action generator type",
-            "type": "string",
-            "anyOf": [
-                {
-                    "description": "Action generators of tic-tac-toe",
-                    "enum": [
-                        "default"
-                    ]
-                }
-            ]
+            "$ref": "action_generators/types.schema.json"
         },
         "data": {
             "description": "Check the 'action_generators' folder for more information"
