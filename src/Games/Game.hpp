@@ -5,8 +5,7 @@
 
 class Game;
 
-class State
-{
+class State {
 public:
     virtual ~State() = default;
     virtual nlohmann::json GetJson() const = 0;
@@ -15,8 +14,7 @@ public:
     static std::unique_ptr<State> Create(const Game &game, const nlohmann::json &data);
 };
 
-class Action
-{
+class Action {
 public:
     virtual ~Action() = default;
     virtual nlohmann::json GetJson() const = 0;
@@ -24,12 +22,12 @@ public:
     static std::unique_ptr<Action> Create(const Game &game, const nlohmann::json &data);
 };
 
-class Game
-{
+class Game {
 public:
     virtual ~Game() = default;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;
-    virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0; // TODO: Small vector optimization
+    // TODO: Small vector optimization
+    virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0;
 
     static std::unique_ptr<Game> Create(const nlohmann::json &data);
 };

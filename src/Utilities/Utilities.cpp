@@ -1,9 +1,8 @@
 #include "Utilities.hpp"
-#include <mutex>
 #include <fstream>
+#include <mutex>
 
-const nlohmann::json_schema::json_validator &Util::GetJsonValidator(std::string_view path)
-{
+const nlohmann::json_schema::json_validator &Util::GetJsonValidator(std::string_view path) {
     {
         const std::shared_lock lock(_MtxValidatorMap);
         const auto iter = _ValidatorMap.find(path);
@@ -12,8 +11,7 @@ const nlohmann::json_schema::json_validator &Util::GetJsonValidator(std::string_
     }
     nlohmann::json_schema::json_validator validator = {
         nlohmann::json::parse(std::ifstream("schema/" + std::string(path))),
-        [](const nlohmann::json_uri &id, nlohmann::json &value)
-        {
+        [](const nlohmann::json_uri &id, nlohmann::json &value) {
             value = nlohmann::json::parse(std::ifstream("schema" + id.path()));
         },
     };

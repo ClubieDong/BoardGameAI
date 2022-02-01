@@ -1,7 +1,6 @@
 #pragma once
 
-class Player
-{
+class Player {
 public:
     virtual ~Player() = default;
 };

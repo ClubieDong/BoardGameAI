@@ -1,12 +1,12 @@
 #include "Server.hpp"
-#include <iostream>
-#include <stdexcept>
-#include <thread>
+#include "../Utilities/Utilities.hpp"
 #include <chrono>
 #include <fstream>
-#include <vector>
+#include <iostream>
 #include <optional>
-#include "../Utilities/Utilities.hpp"
+#include <stdexcept>
+#include <thread>
+#include <vector>
 
 const std::unordered_map<std::string, nlohmann::json (Server::*)(const nlohmann::json &)> Server::_ServiceMap = {
     {"echo", &Server::Echo},
@@ -17,21 +17,17 @@ const std::unordered_map<std::string, nlohmann::json (Server::*)(const nlohmann:
     {"take_action", &Server::TakeAction},
 };
 
-void Server::Run()
-{
+void Server::Run() {
     std::string reqStr;
-    while (true)
-    {
+    while (true) {
         std::getline(std::cin, reqStr);
         std::thread(Serve, this, std::move(reqStr)).detach();
     }
 }
 
-void Server::Serve(Server *self, std::string &&reqStr)
-{
+void Server::Serve(Server *self, std::string &&reqStr) {
     nlohmann::json response;
-    try
-    {
+    try {
         const auto request = nlohmann::json::parse(reqStr);
         if (request.contains("id"))
             response["id"] = request["id"];
@@ -41,9 +37,7 @@ void Server::Serve(Server *self, std::string &&reqStr)
         const auto service = _ServiceMap.at(type);
         response["data"] = (self->*service)(data);
         response["success"] = true;
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         response["errMsg"] = e.what();
         response["success"] = false;
     }
@@ -51,8 +45,7 @@ void Server::Serve(Server *self, std::string &&reqStr)
     std::cout << response << std::endl;
 }
 
-nlohmann::json Server::Echo(const nlohmann::json &data)
-{
+nlohmann::json Server::Echo(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/echo.schema.json").validate(data);
     const auto time = std::chrono::seconds(data["time"]);
     std::this_thread::sleep_for(time);
@@ -61,8 +54,7 @@ nlohmann::json Server::Echo(const nlohmann::json &data)
     return {{"data", data["data"]}};
 }
 
-nlohmann::json Server::AddGame(const nlohmann::json &data)
-{
+nlohmann::json Server::AddGame(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_game.schema.json").validate(data);
     auto game = Game::Create(data);
     unsigned int id;
@@ -74,8 +66,7 @@ nlohmann::json Server::AddGame(const nlohmann::json &data)
     return {{"gameID", id}};
 }
 
-nlohmann::json Server::AddState(const nlohmann::json &data)
-{
+nlohmann::json Server::AddState(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_state.schema.json").validate(data);
     auto &game = GetGame(data["gameID"]);
     std::unique_ptr<State> state;
@@ -97,8 +88,7 @@ nlohmann::json Server::AddState(const nlohmann::json &data)
     return {{"stateID", id}};
 }
 
-nlohmann::json Server::AddActionGenerator(const nlohmann::json &data)
-{
+nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_action_generator.schema.json").validate(data);
     const std::string &type = data["type"];
     auto &state = GetState(data["stateID"]);
@@ -110,9 +100,9 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data)
     {
         const std::scoped_lock lock(_MtxActionGeneratorList);
         id = ++_ActionGeneratorCount;
-        recordPtr = &_ActionGeneratorList.try_emplace(id, std::move(actionGenerator),
-                                                      std::move(actionGeneratorData), &state)
-                         .first->second;
+        recordPtr =
+            &_ActionGeneratorList.try_emplace(id, std::move(actionGenerator), std::move(actionGeneratorData), &state)
+                 .first->second;
     }
     {
         const std::scoped_lock lock(state.MtxRecord);
@@ -121,20 +111,17 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data)
     return {{"actionGeneratorID", id}};
 }
 
-nlohmann::json Server::GenerateActions(const nlohmann::json &data)
-{
+nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/generate_actions.schema.json").validate(data);
     const auto &record = GetActionGenerator(data["actionGeneratorID"]);
     const auto &generator = *record.ActionGeneratorPtr;
     const auto &generatorData = *record.ActionGeneratorDataPtr;
     nlohmann::json actions;
-    generator.ForEach(generatorData, [&](const Action &action)
-                      { actions.push_back(action.GetJson()); });
+    generator.ForEach(generatorData, [&](const Action &action) { actions.push_back(action.GetJson()); });
     return {{"actions", actions}};
 }
 
-nlohmann::json Server::TakeAction(const nlohmann::json &data)
-{
+nlohmann::json Server::TakeAction(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/take_action.schema.json").validate(data);
     const auto &record = GetState(data["stateID"]);
     auto &mutex = record.MtxState;

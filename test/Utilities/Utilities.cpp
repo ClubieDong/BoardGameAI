@@ -1,8 +1,7 @@
-#include <gtest/gtest.h>
 #include "../../src/Utilities/Utilities.hpp"
+#include <gtest/gtest.h>
 
-TEST(Utilities, Json2Board)
-{
+TEST(Utilities, Json2Board) {
     { // Success
         const auto [board, count] = Util::Json2Board<3, 4, 2>({
             {0, 0, 0, 0},

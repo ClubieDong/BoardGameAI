@@ -1,27 +1,25 @@
 #pragma once
 
+#include "../Games/ActionGenerator.hpp"
+#include "../Games/Game.hpp"
+#include "../Players/Player.hpp"
+#include <atomic>
+#include <memory>
 #include <mutex>
+#include <nlohmann/json-schema.hpp>
+#include <nlohmann/json.hpp>
 #include <shared_mutex>
 #include <string>
-#include <unordered_map>
 #include <string_view>
-#include <memory>
-#include <atomic>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
-#include "../Games/Game.hpp"
-#include "../Games/ActionGenerator.hpp"
-#include "../Players/Player.hpp"
+#include <unordered_map>
 
-class Server
-{
+class Server {
 private:
     struct StateRecord;
     struct PlayerRecord;
     struct ActionGeneratorRecord;
 
-    struct GameRecord
-    {
+    struct GameRecord {
         // Used to lock this record object
         mutable std::mutex MtxRecord; // TODO: shared_mutex?
         // Used to lock the `Game` object
@@ -29,12 +27,10 @@ private:
         const std::unique_ptr<Game> GamePtr;
         std::vector<StateRecord *> SubStates;
 
-        explicit GameRecord(std::unique_ptr<Game> &&gamePtr)
-            : GamePtr(std::move(gamePtr)) {}
+        explicit GameRecord(std::unique_ptr<Game> &&gamePtr) : GamePtr(std::move(gamePtr)) {}
     };
 
-    struct StateRecord
-    {
+    struct StateRecord {
         // Used to lock this record object
         mutable std::mutex MtxRecord; // TODO: shared_mutex?
         // Used to lock the `State` object
@@ -48,14 +44,12 @@ private:
             : StatePtr(std::move(statePtr)), ParentGame(parentGame) {}
     };
 
-    struct PlayerRecord
-    {
+    struct PlayerRecord {
         std::unique_ptr<Player> PlayerPtr;
         StateRecord *ParentState;
     };
 
-    struct ActionGeneratorRecord
-    {
+    struct ActionGeneratorRecord {
         // Used to lock the `ActionGenerator` object
         mutable std::mutex MtxActionGenerator; // TODO: shared_mutex? TODO: Do I Need this?
         const std::unique_ptr<ActionGenerator> ActionGeneratorPtr;
@@ -66,35 +60,31 @@ private:
                                        std::unique_ptr<ActionGenerator::Data> &&actionGeneratorDataPtr,
                                        StateRecord *parentState)
             : ActionGeneratorPtr(std::move(actionGeneratorPtr)),
-              ActionGeneratorDataPtr(std::move(actionGeneratorDataPtr)),
-              ParentState(parentState) {}
+              ActionGeneratorDataPtr(std::move(actionGeneratorDataPtr)), ParentState(parentState) {}
     };
 
     mutable std::mutex _MtxCout;
     mutable std::shared_mutex _MtxGameList, _MtxStateList, _MtxPlayerList, _MtxActionGeneratorList;
-    unsigned int _GameCount, _StateCount, _PlayerCount, _ActionGeneratorCount; // need to be guarded by the corresponding mutex
+    // Need to be guarded by the corresponding mutex
+    unsigned int _GameCount, _StateCount, _PlayerCount, _ActionGeneratorCount;
     std::unordered_map<unsigned int, GameRecord> _GameList;
     std::unordered_map<unsigned int, StateRecord> _StateList;
     std::unordered_map<unsigned int, PlayerRecord> _PlayerList;
     std::unordered_map<unsigned int, ActionGeneratorRecord> _ActionGeneratorList;
 
-    GameRecord &GetGame(unsigned int id)
-    {
+    GameRecord &GetGame(unsigned int id) {
         const std::shared_lock lock(_MtxGameList);
         return _GameList.at(id);
     }
-    StateRecord &GetState(unsigned int id)
-    {
+    StateRecord &GetState(unsigned int id) {
         const std::shared_lock lock(_MtxStateList);
         return _StateList.at(id);
     }
-    PlayerRecord &GetPlayer(unsigned int id)
-    {
+    PlayerRecord &GetPlayer(unsigned int id) {
         const std::shared_lock lock(_MtxPlayerList);
         return _PlayerList.at(id);
     }
-    ActionGeneratorRecord &GetActionGenerator(unsigned int id)
-    {
+    ActionGeneratorRecord &GetActionGenerator(unsigned int id) {
         const std::shared_lock lock(_MtxActionGeneratorList);
         return _ActionGeneratorList.at(id);
     }

@@ -1,8 +1,7 @@
-#include <gtest/gtest.h>
 #include "../../../src/Games/TicTacToe/Game.hpp"
+#include <gtest/gtest.h>
 
-TEST(TicTacToe_State, Constructor)
-{
+TEST(TicTacToe_State, Constructor) {
     { // Create default state
         const tic_tac_toe::Game game("{}"_json);
         const tic_tac_toe::State state(game);
@@ -18,8 +17,7 @@ TEST(TicTacToe_State, Constructor)
     }
 }
 
-TEST(TicTacToe_State, GetJson)
-{
+TEST(TicTacToe_State, GetJson) {
     const auto expect = R"({
         "board": [[1, 2, 1], [2, 1, 2], [0, 0, 0]]
     })"_json;
@@ -28,8 +26,7 @@ TEST(TicTacToe_State, GetJson)
     EXPECT_EQ(actual, expect);
 }
 
-TEST(TicTacToe_Action, Constructor)
-{
+TEST(TicTacToe_Action, Constructor) {
     { // Create action from row and col
         const tic_tac_toe::Action action(1, 2);
         EXPECT_EQ(action.Row, 1);
@@ -42,20 +39,17 @@ TEST(TicTacToe_Action, Constructor)
     }
 }
 
-TEST(TicTacToe_Action, GetJson)
-{
+TEST(TicTacToe_Action, GetJson) {
     const tic_tac_toe::Action action(1, 2);
     const auto json = action.GetJson();
     EXPECT_EQ(json, R"({"row": 1, "col": 2})"_json);
 }
 
-TEST(TicTacToe_Game, Constructor)
-{
+TEST(TicTacToe_Game, Constructor) {
     const tic_tac_toe::Game game("{}"_json);
 }
 
-TEST(TicTacToe_Game, IsValidAction)
-{
+TEST(TicTacToe_Game, IsValidAction) {
     const tic_tac_toe::Game game("{}"_json);
     const tic_tac_toe::State state(R"({
         "board": [[1, 2, 1], [2, 1, 2], [0, 0, 0]]
@@ -78,8 +72,7 @@ TEST(TicTacToe_Game, IsValidAction)
     }
 }
 
-TEST(TicTacToe_Game, TakeAction)
-{
+TEST(TicTacToe_Game, TakeAction) {
     const tic_tac_toe::Game game("{}"_json);
     { // Non-terminal action
         tic_tac_toe::State state(game);

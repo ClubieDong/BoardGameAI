@@ -1,7 +1,6 @@
 #include "Server/Server.hpp"
 
-int main()
-{
+int main() {
     Server().Run();
     return 0;
 }
