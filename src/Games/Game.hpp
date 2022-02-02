@@ -18,6 +18,7 @@ class Action {
 public:
     virtual ~Action() = default;
     virtual nlohmann::json GetJson() const = 0;
+    virtual std::unique_ptr<Action> Clone() const = 0;
 
     static std::unique_ptr<Action> Create(const Game &game, const nlohmann::json &data);
 };

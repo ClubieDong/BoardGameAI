@@ -4,9 +4,9 @@
     "description": "Return the same data after sleeping for a specified period of time. Used for test",
     "type": "object",
     "properties": {
-        "time": {
+        "sleepTime": {
             "description": "Sleep time, in seconds",
-            "type": "integer",
+            "type": "number",
             "minimum": 0
         },
         "data": {
@@ -14,7 +14,7 @@
         }
     },
     "required": [
-        "time"
+        "sleepTime"
     ],
     "additionalProperties": false
 }

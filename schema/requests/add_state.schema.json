@@ -9,12 +9,11 @@
             "$ref": "basic/id.schema.json"
         },
         "data": {
-            "description": "Check the 'states' folder for more information. If it is null, the default state is created"
+            "description": "Check the 'states' folder for more information. If not specified, the default state is created"
         }
     },
     "required": [
-        "gameID",
-        "data"
+        "gameID"
     ],
     "additionalProperties": false
 }

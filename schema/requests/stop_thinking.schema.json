@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "StopThinking Request",
+    "description": "Let the specified player stop thinking",
+    "type": "object",
+    "properties": {
+        "playerID": {
+            "description": "Player ID",
+            "$ref": "basic/id.schema.json"
+        }
+    },
+    "required": [
+        "playerID"
+    ],
+    "additionalProperties": false
+}

@@ -2,7 +2,6 @@
 #include "../Utilities/Utilities.hpp"
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <optional>
 #include <stdexcept>
 #include <thread>
@@ -16,12 +15,16 @@ const std::unordered_map<std::string, nlohmann::json (Server::*)(const nlohmann:
     {"add_action_generator", &Server::AddActionGenerator},
     {"generate_actions", &Server::GenerateActions},
     {"take_action", &Server::TakeAction},
+    {"start_thinking", &Server::StartThinking},
+    {"stop_thinking", &Server::StopThinking},
+    {"get_best_action", &Server::GetBestAction},
+    {"query_details", &Server::QueryDetails},
 };
 
 void Server::Run() {
     std::string reqStr;
     while (true) {
-        std::getline(std::cin, reqStr);
+        std::getline(_InputStream, reqStr);
         std::thread(Serve, this, std::move(reqStr)).detach();
     }
 }
@@ -42,13 +45,13 @@ void Server::Serve(Server *self, std::string &&reqStr) {
         response["errMsg"] = e.what();
         response["success"] = false;
     }
-    const std::scoped_lock lock(self->_MtxCout);
-    std::cout << response << std::endl;
+    const std::scoped_lock lock(self->_MtxOutputStream);
+    self->_OutputStream << response << std::endl;
 }
 
 nlohmann::json Server::Echo(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/echo.schema.json").validate(data);
-    const auto time = std::chrono::seconds(data["time"]);
+    const std::chrono::duration<double> time(data["sleepTime"]);
     std::this_thread::sleep_for(time);
     if (!data.contains("data"))
         return nlohmann::json::object();
@@ -72,10 +75,10 @@ nlohmann::json Server::AddState(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_state.schema.json").validate(data);
     auto &game = GetGame(data["gameID"]);
     std::unique_ptr<State> state;
-    if (data["data"] == nullptr)
-        state = State::Create(*game.GamePtr);
-    else
+    if (data.contains("data"))
         state = State::Create(*game.GamePtr, data["data"]);
+    else
+        state = State::Create(*game.GamePtr);
     unsigned int id;
     StateRecord *recordPtr;
     {
@@ -166,4 +169,49 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
     if (result)
         response["result"] = *result;
     return response;
+}
+
+nlohmann::json Server::StartThinking(const nlohmann::json &data) {
+    Util::GetJsonValidator("requests/start_thinking.schema.json").validate(data);
+    const auto &record = GetPlayer(data["playerID"]);
+    auto &mutex = record.MtxPlayer;
+    auto &player = *record.PlayerPtr;
+    {
+        const std::scoped_lock lock(mutex);
+        player.StartThinking();
+    }
+    return nlohmann::json::object();
+}
+
+nlohmann::json Server::StopThinking(const nlohmann::json &data) {
+    Util::GetJsonValidator("requests/stop_thinking.schema.json").validate(data);
+    const auto &record = GetPlayer(data["playerID"]);
+    auto &mutex = record.MtxPlayer;
+    auto &player = *record.PlayerPtr;
+    {
+        const std::scoped_lock lock(mutex);
+        player.StopThinking();
+    }
+    return nlohmann::json::object();
+}
+
+nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
+    Util::GetJsonValidator("requests/get_best_action.schema.json").validate(data);
+    const auto &record = GetPlayer(data["playerID"]);
+    auto &mutex = record.MtxPlayer;
+    auto &player = *record.PlayerPtr;
+    std::optional<std::chrono::duration<double>> time;
+    if (data.contains("maxThinkTime"))
+        time = std::chrono::duration<double>(data["maxThinkTime"]);
+    std::unique_ptr<Action> bestAction;
+    {
+        const std::scoped_lock lock(mutex);
+        bestAction = player.GetBestAction(time);
+    }
+    return {{"action", bestAction->GetJson()}};
+}
+
+nlohmann::json Server::QueryDetails(const nlohmann::json &) {
+    // TODO
+    return {};
 }

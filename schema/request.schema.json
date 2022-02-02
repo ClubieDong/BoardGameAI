@@ -17,7 +17,11 @@
                 "add_player",
                 "add_action_generator",
                 "generate_actions",
-                "take_action"
+                "take_action",
+                "start_thinking",
+                "stop_thinking",
+                "get_best_action",
+                "query_details"
             ]
         },
         "data": {

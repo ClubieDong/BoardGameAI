@@ -4,10 +4,12 @@
 #include "../Games/Game.hpp"
 #include "../Players/Player.hpp"
 #include <atomic>
+#include <istream>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
+#include <ostream>
 #include <shared_mutex>
 #include <string>
 #include <string_view>
@@ -68,10 +70,12 @@ private:
               ActionGeneratorDataPtr(std::move(actionGeneratorDataPtr)), ParentState(parentState) {}
     };
 
-    mutable std::mutex _MtxCout;
+    std::istream &_InputStream;
+    std::ostream &_OutputStream;
+    mutable std::mutex _MtxOutputStream;
     mutable std::shared_mutex _MtxGameList, _MtxStateList, _MtxPlayerList, _MtxActionGeneratorList;
     // Need to be guarded by the corresponding mutex
-    unsigned int _GameCount, _StateCount, _PlayerCount, _ActionGeneratorCount;
+    unsigned int _GameCount = 0, _StateCount = 0, _PlayerCount = 0, _ActionGeneratorCount = 0;
     std::unordered_map<unsigned int, GameRecord> _GameList;
     std::unordered_map<unsigned int, StateRecord> _StateList;
     std::unordered_map<unsigned int, PlayerRecord> _PlayerList;
@@ -95,6 +99,7 @@ private:
     }
 
 public:
+    explicit Server(std::istream &is, std::ostream &os) : _InputStream(is), _OutputStream(os) {}
     void Run();
 
 private:
@@ -108,4 +113,8 @@ private:
     nlohmann::json AddActionGenerator(const nlohmann::json &data);
     nlohmann::json GenerateActions(const nlohmann::json &data);
     nlohmann::json TakeAction(const nlohmann::json &data);
+    nlohmann::json StartThinking(const nlohmann::json &data);
+    nlohmann::json StopThinking(const nlohmann::json &data);
+    nlohmann::json GetBestAction(const nlohmann::json &data);
+    nlohmann::json QueryDetails(const nlohmann::json &data);
 };

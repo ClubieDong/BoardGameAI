@@ -2,6 +2,7 @@
 
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
+#include <random>
 #include <shared_mutex>
 #include <string_view>
 #include <unordered_map>
@@ -48,5 +49,10 @@ public:
                 return false;
         } while (board[row][col] != 0);
         return true;
+    }
+
+    static std::mt19937 &GetRandomEngine() {
+        static thread_local std::mt19937 engine(std::random_device{}());
+        return engine;
     }
 };

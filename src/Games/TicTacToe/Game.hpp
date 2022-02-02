@@ -26,6 +26,7 @@ public:
     explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
     explicit Action(const nlohmann::json &data);
     virtual nlohmann::json GetJson() const override { return {{"row", Row}, {"col", Col}}; }
+    virtual std::unique_ptr<::Action> Clone() const override { return std::make_unique<Action>(*this); }
 };
 
 class Game : public ::Game {

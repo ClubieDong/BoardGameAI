@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "GetBestAction Request",
+    "description": "Get the best action calculated by the specified player",
+    "type": "object",
+    "properties": {
+        "playerID": {
+            "description": "Player ID",
+            "$ref": "basic/id.schema.json"
+        },
+        "maxThinkTime": {
+            "description": "The maximum time the player is allowed to think, in seconds. Only works for players with the ability to control think time. If not specified, return as soon as possible",
+            "type": "number",
+            "minimum": 0
+        }
+    },
+    "required": [
+        "playerID"
+    ],
+    "additionalProperties": false
+}

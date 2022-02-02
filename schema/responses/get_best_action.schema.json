@@ -1,0 +1,14 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "GetBestAction Response",
+    "type": "object",
+    "properties": {
+        "action": {
+            "description": "The best action calculated by the player. Check the 'actions' folder for more information"
+        }
+    },
+    "required": [
+        "action"
+    ],
+    "additionalProperties": false
+}
