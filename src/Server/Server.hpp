@@ -64,20 +64,20 @@ private:
     };
 
     // Used to lock the output stream
-    mutable std::mutex _MtxOutputStream;
-    std::istream &_InputStream;
-    std::ostream &_OutputStream;
+    mutable std::mutex m_MtxOutputStream;
+    std::istream &m_InputStream;
+    std::ostream &m_OutputStream;
 
-    std::atomic<unsigned int> _GameCount = 0, _StateCount = 0, _PlayerCount = 0, _ActionGeneratorCount = 0;
-    tbb::concurrent_unordered_map<unsigned int, GameRecord> _GameList;
-    tbb::concurrent_unordered_map<unsigned int, StateRecord> _StateList;
-    tbb::concurrent_unordered_map<unsigned int, PlayerRecord> _PlayerList;
-    tbb::concurrent_unordered_map<unsigned int, ActionGeneratorRecord> _ActionGeneratorList;
+    std::atomic<unsigned int> m_GameCount = 0, m_StateCount = 0, m_PlayerCount = 0, m_ActionGeneratorCount = 0;
+    tbb::concurrent_unordered_map<unsigned int, GameRecord> m_GameList;
+    tbb::concurrent_unordered_map<unsigned int, StateRecord> m_StateList;
+    tbb::concurrent_unordered_map<unsigned int, PlayerRecord> m_PlayerList;
+    tbb::concurrent_unordered_map<unsigned int, ActionGeneratorRecord> m_ActionGeneratorList;
 
     static void Serve(Server *self, std::string &&reqStr);
 
 public:
-    explicit Server(std::istream &is, std::ostream &os) : _InputStream(is), _OutputStream(os) {}
+    explicit Server(std::istream &is, std::ostream &os) : m_InputStream(is), m_OutputStream(os) {}
     void Run();
 
     nlohmann::json Echo(const nlohmann::json &data);

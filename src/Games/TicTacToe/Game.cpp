@@ -18,9 +18,9 @@ Game::Game(const nlohmann::json &data) {
     Util::GetJsonValidator("games/tic_tac_toe.schema.json").validate(data);
 }
 
-std::optional<std::vector<double>> Game::TakeAction(::State &_state, const ::Action &_action) const {
-    auto &state = static_cast<State &>(_state);
-    const auto &action = static_cast<const Action &>(_action);
+std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Action &action_) const {
+    auto &state = static_cast<State &>(state_);
+    const auto &action = static_cast<const Action &>(action_);
     assert(IsValidAction(state, action));
 
     const auto nextPlayer = (state.MoveCount & 1) + 1;

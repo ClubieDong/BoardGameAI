@@ -24,7 +24,7 @@ static const std::unordered_map<std::string, nlohmann::json (Server::*)(const nl
 void Server::Run() {
     std::string reqStr;
     while (true) {
-        std::getline(_InputStream, reqStr);
+        std::getline(m_InputStream, reqStr);
         std::thread(Serve, this, std::move(reqStr)).detach();
     }
 }
@@ -45,8 +45,8 @@ void Server::Serve(Server *self, std::string &&reqStr) {
         response["errMsg"] = e.what();
         response["success"] = false;
     }
-    const std::scoped_lock lock(self->_MtxOutputStream);
-    self->_OutputStream << response << std::endl;
+    const std::scoped_lock lock(self->m_MtxOutputStream);
+    self->m_OutputStream << response << std::endl;
 }
 
 nlohmann::json Server::Echo(const nlohmann::json &data) {
@@ -60,19 +60,19 @@ nlohmann::json Server::Echo(const nlohmann::json &data) {
 
 nlohmann::json Server::AddGame(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_game.schema.json").validate(data);
-    const auto id = ++_GameCount;
+    const auto id = ++m_GameCount;
     auto game = Game::Create(data["type"], data["data"]);
-    _GameList.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(std::move(game)));
+    m_GameList.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(std::move(game)));
     return {{"gameID", id}};
 }
 
 nlohmann::json Server::AddState(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_state.schema.json").validate(data);
-    const auto id = ++_StateCount;
-    auto &gameRecord = _GameList.at(data["gameID"]);
+    const auto id = ++m_StateCount;
+    auto &gameRecord = m_GameList.at(data["gameID"]);
     auto state =
         data.contains("data") ? State::Create(*gameRecord.GamePtr, data["data"]) : State::Create(*gameRecord.GamePtr);
-    auto recordPtr = &_StateList
+    auto recordPtr = &m_StateList
                           .emplace(std::piecewise_construct, std::forward_as_tuple(id),
                                    std::forward_as_tuple(std::move(state), &gameRecord))
                           .first->second;
@@ -83,11 +83,11 @@ nlohmann::json Server::AddState(const nlohmann::json &data) {
 
 nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_player.schema.json").validate(data);
-    const auto id = ++_PlayerCount;
-    auto &stateRecord = _StateList.at(data["stateID"]);
+    const auto id = ++m_PlayerCount;
+    auto &stateRecord = m_StateList.at(data["stateID"]);
     const auto &gameRecord = *stateRecord.ParentGame;
     auto player = Player::Create(data["type"], *gameRecord.GamePtr, *stateRecord.StatePtr, data["data"]);
-    auto recordPtr = &_PlayerList
+    auto recordPtr = &m_PlayerList
                           .emplace(std::piecewise_construct, std::forward_as_tuple(id),
                                    std::forward_as_tuple(std::move(player), &stateRecord))
                           .first->second;
@@ -98,14 +98,14 @@ nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
 
 nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_action_generator.schema.json").validate(data);
-    const auto id = ++_ActionGeneratorCount;
-    auto &stateRecord = _StateList.at(data["stateID"]);
+    const auto id = ++m_ActionGeneratorCount;
+    auto &stateRecord = m_StateList.at(data["stateID"]);
     const auto &gameRecord = *stateRecord.ParentGame;
     auto actionGenerator =
         ActionGenerator::Create(data["type"], *gameRecord.GamePtr, *stateRecord.StatePtr, data["data"]);
     auto actionGeneratorData = ActionGenerator::Data::Create(*actionGenerator);
     auto recordPtr =
-        &_ActionGeneratorList
+        &m_ActionGeneratorList
              .emplace(std::piecewise_construct, std::forward_as_tuple(id),
                       std::forward_as_tuple(std::move(actionGenerator), std::move(actionGeneratorData), &stateRecord))
              .first->second;
@@ -116,7 +116,7 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
 
 nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/generate_actions.schema.json").validate(data);
-    const auto &actionGeneratorRecord = _ActionGeneratorList.at(data["actionGeneratorID"]);
+    const auto &actionGeneratorRecord = m_ActionGeneratorList.at(data["actionGeneratorID"]);
     const auto &actionGenerator = *actionGeneratorRecord.ActionGeneratorPtr;
     const auto &actionGeneratorData = *actionGeneratorRecord.ActionGeneratorDataPtr;
     nlohmann::json actions;
@@ -126,7 +126,7 @@ nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
 
 nlohmann::json Server::TakeAction(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/take_action.schema.json").validate(data);
-    const auto &stateRecord = _StateList.at(data["stateID"]);
+    const auto &stateRecord = m_StateList.at(data["stateID"]);
     const auto &game = *stateRecord.ParentGame->GamePtr;
     auto &state = *stateRecord.StatePtr;
     const auto action = Action::Create(game, data["action"]);
@@ -157,7 +157,7 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
 
 nlohmann::json Server::StartThinking(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/start_thinking.schema.json").validate(data);
-    const auto &playerRecord = _PlayerList.at(data["playerID"]);
+    const auto &playerRecord = m_PlayerList.at(data["playerID"]);
     {
         if (!playerRecord.MtxPlayer.try_lock())
             throw std::invalid_argument("The specified player is busy");
@@ -169,7 +169,7 @@ nlohmann::json Server::StartThinking(const nlohmann::json &data) {
 
 nlohmann::json Server::StopThinking(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/stop_thinking.schema.json").validate(data);
-    const auto &playerRecord = _PlayerList.at(data["playerID"]);
+    const auto &playerRecord = m_PlayerList.at(data["playerID"]);
     {
         if (!playerRecord.MtxPlayer.try_lock())
             throw std::invalid_argument("The specified player is busy");
@@ -181,7 +181,7 @@ nlohmann::json Server::StopThinking(const nlohmann::json &data) {
 
 nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/get_best_action.schema.json").validate(data);
-    const auto &playerRecord = _PlayerList.at(data["playerID"]);
+    const auto &playerRecord = m_PlayerList.at(data["playerID"]);
     std::optional<std::chrono::duration<double>> time;
     if (data.contains("maxThinkTime"))
         time = std::chrono::duration<double>(data["maxThinkTime"]);

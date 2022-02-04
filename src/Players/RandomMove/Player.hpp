@@ -11,9 +11,9 @@
 namespace random_move {
 class Player : public ::Player {
 private:
-    const State *_State;
-    std::unique_ptr<ActionGenerator> _ActionGenerator;
-    std::unique_ptr<ActionGenerator::Data> _ActionGeneratorData;
+    const State *m_State;
+    std::unique_ptr<ActionGenerator> m_ActionGenerator;
+    std::unique_ptr<ActionGenerator::Data> m_ActionGeneratorData;
 
 public:
     explicit Player(const Game &game, const State &state, const nlohmann::json &data);

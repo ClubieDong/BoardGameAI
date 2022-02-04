@@ -32,11 +32,11 @@ public:
 class Game : public ::Game {
 public:
     explicit Game(const nlohmann::json &data);
-    virtual bool IsValidAction(const ::State &_state, const ::Action &_action) const override {
-        const auto &state = static_cast<const State &>(_state);
-        const auto &action = static_cast<const Action &>(_action);
+    virtual bool IsValidAction(const ::State &state_, const ::Action &action_) const override {
+        const auto &state = static_cast<const State &>(state_);
+        const auto &action = static_cast<const Action &>(action_);
         return action.Row < 3 && action.Col < 3 && state.Board[action.Row][action.Col] == 0;
     }
-    virtual std::optional<std::vector<double>> TakeAction(::State &_state, const ::Action &_action) const override;
+    virtual std::optional<std::vector<double>> TakeAction(::State &state, const ::Action &action) const override;
 };
 } // namespace tic_tac_toe

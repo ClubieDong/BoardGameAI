@@ -5,7 +5,7 @@
 
 namespace tic_tac_toe::action_generator {
 Default::Default(const ::Game &, const ::State &state, const nlohmann::json &data)
-    : _State(static_cast<const State *>(&state)) {
+    : m_State(static_cast<const State *>(&state)) {
     Util::GetJsonValidator("action_generators/tic_tac_toe/default.schema.json").validate(data);
 }
 
