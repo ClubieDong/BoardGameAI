@@ -8,10 +8,6 @@
 #include <unordered_map>
 
 class Util {
-private:
-    inline static std::shared_mutex _MtxValidatorMap;
-    inline static std::unordered_map<std::string_view, nlohmann::json_schema::json_validator> _ValidatorMap;
-
 public:
     static const nlohmann::json_schema::json_validator &GetJsonValidator(std::string_view path);
 

@@ -7,12 +7,11 @@
 #include <istream>
 #include <memory>
 #include <mutex>
-#include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 #include <ostream>
-#include <shared_mutex>
 #include <string>
-#include <string_view>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_vector.h>
 #include <unordered_map>
 
 class Server {
@@ -22,89 +21,64 @@ private:
     struct ActionGeneratorRecord;
 
     struct GameRecord {
-        // Used to lock this record object
-        mutable std::mutex MtxRecord; // TODO: shared_mutex?
-        // Used to lock the `Game` object
-        mutable std::mutex MtxGame; // TODO: shared_mutex? TODO: DO I Need this?
         const std::unique_ptr<Game> GamePtr;
-        std::vector<StateRecord *> SubStates;
+        tbb::concurrent_vector<StateRecord *> SubStates;
 
         explicit GameRecord(std::unique_ptr<Game> &&gamePtr) : GamePtr(std::move(gamePtr)) {}
     };
 
     struct StateRecord {
-        // Used to lock this record object
-        mutable std::mutex MtxRecord; // TODO: shared_mutex?
         // Used to lock the `State` object
-        mutable std::mutex MtxState; // TODO: shared_mutex? TODO: Do I Need this?
+        mutable std::mutex MtxState;
         const std::unique_ptr<State> StatePtr;
         const GameRecord *ParentGame;
-        std::vector<PlayerRecord *> SubPlayers;
-        std::vector<ActionGeneratorRecord *> SubActionGenerators;
+        tbb::concurrent_vector<PlayerRecord *> SubPlayers;
+        tbb::concurrent_vector<ActionGeneratorRecord *> SubActionGenerators;
 
-        explicit StateRecord(std::unique_ptr<State> &&statePtr, GameRecord *parentGame)
+        explicit StateRecord(std::unique_ptr<State> &&statePtr, const GameRecord *parentGame)
             : StatePtr(std::move(statePtr)), ParentGame(parentGame) {}
     };
 
     struct PlayerRecord {
-        // Used to lock the `Player` object;
-        mutable std::mutex MtxPlayer; // TODO: shared_mutex? TODO: Do I Need this?
+        // Used to lock the `Player` object
+        mutable std::mutex MtxPlayer;
         const std::unique_ptr<Player> PlayerPtr;
         const StateRecord *ParentState;
 
-        explicit PlayerRecord(std::unique_ptr<Player> &&playerPtr, StateRecord *parentState)
+        explicit PlayerRecord(std::unique_ptr<Player> &&playerPtr, const StateRecord *parentState)
             : PlayerPtr(std::move(playerPtr)), ParentState(parentState) {}
     };
 
     struct ActionGeneratorRecord {
         // Used to lock the `ActionGenerator` object
-        mutable std::mutex MtxActionGenerator; // TODO: shared_mutex? TODO: Do I Need this?
+        mutable std::mutex MtxActionGenerator;
         const std::unique_ptr<ActionGenerator> ActionGeneratorPtr;
         const std::unique_ptr<ActionGenerator::Data> ActionGeneratorDataPtr;
         const StateRecord *ParentState;
 
         explicit ActionGeneratorRecord(std::unique_ptr<ActionGenerator> &&actionGeneratorPtr,
                                        std::unique_ptr<ActionGenerator::Data> &&actionGeneratorDataPtr,
-                                       StateRecord *parentState)
+                                       const StateRecord *parentState)
             : ActionGeneratorPtr(std::move(actionGeneratorPtr)),
               ActionGeneratorDataPtr(std::move(actionGeneratorDataPtr)), ParentState(parentState) {}
     };
 
+    // Used to lock the output stream
+    mutable std::mutex _MtxOutputStream;
     std::istream &_InputStream;
     std::ostream &_OutputStream;
-    mutable std::mutex _MtxOutputStream;
-    mutable std::shared_mutex _MtxGameList, _MtxStateList, _MtxPlayerList, _MtxActionGeneratorList;
-    // Need to be guarded by the corresponding mutex
-    unsigned int _GameCount = 0, _StateCount = 0, _PlayerCount = 0, _ActionGeneratorCount = 0;
-    std::unordered_map<unsigned int, GameRecord> _GameList;
-    std::unordered_map<unsigned int, StateRecord> _StateList;
-    std::unordered_map<unsigned int, PlayerRecord> _PlayerList;
-    std::unordered_map<unsigned int, ActionGeneratorRecord> _ActionGeneratorList;
 
-    GameRecord &GetGame(unsigned int id) {
-        const std::shared_lock lock(_MtxGameList);
-        return _GameList.at(id);
-    }
-    StateRecord &GetState(unsigned int id) {
-        const std::shared_lock lock(_MtxStateList);
-        return _StateList.at(id);
-    }
-    PlayerRecord &GetPlayer(unsigned int id) {
-        const std::shared_lock lock(_MtxPlayerList);
-        return _PlayerList.at(id);
-    }
-    ActionGeneratorRecord &GetActionGenerator(unsigned int id) {
-        const std::shared_lock lock(_MtxActionGeneratorList);
-        return _ActionGeneratorList.at(id);
-    }
+    std::atomic<unsigned int> _GameCount = 0, _StateCount = 0, _PlayerCount = 0, _ActionGeneratorCount = 0;
+    tbb::concurrent_unordered_map<unsigned int, GameRecord> _GameList;
+    tbb::concurrent_unordered_map<unsigned int, StateRecord> _StateList;
+    tbb::concurrent_unordered_map<unsigned int, PlayerRecord> _PlayerList;
+    tbb::concurrent_unordered_map<unsigned int, ActionGeneratorRecord> _ActionGeneratorList;
+
+    static void Serve(Server *self, std::string &&reqStr);
 
 public:
     explicit Server(std::istream &is, std::ostream &os) : _InputStream(is), _OutputStream(os) {}
     void Run();
-
-private:
-    static const std::unordered_map<std::string, nlohmann::json (Server::*)(const nlohmann::json &)> _ServiceMap;
-    static void Serve(Server *self, std::string &&reqStr);
 
     nlohmann::json Echo(const nlohmann::json &data);
     nlohmann::json AddGame(const nlohmann::json &data);

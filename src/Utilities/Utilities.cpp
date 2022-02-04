@@ -2,11 +2,14 @@
 #include <fstream>
 #include <mutex>
 
+static std::shared_mutex MtxJsonValidatorMap;
+static std::unordered_map<std::string_view, nlohmann::json_schema::json_validator> JsonValidatorMap;
+
 const nlohmann::json_schema::json_validator &Util::GetJsonValidator(std::string_view path) {
     {
-        const std::shared_lock lock(_MtxValidatorMap);
-        const auto iter = _ValidatorMap.find(path);
-        if (iter != _ValidatorMap.end())
+        const std::shared_lock lock(MtxJsonValidatorMap);
+        const auto iter = JsonValidatorMap.find(path);
+        if (iter != JsonValidatorMap.end())
             return iter->second;
     }
     nlohmann::json_schema::json_validator validator = {
@@ -16,7 +19,7 @@ const nlohmann::json_schema::json_validator &Util::GetJsonValidator(std::string_
         },
     };
     {
-        const std::scoped_lock lock(_MtxValidatorMap);
-        return _ValidatorMap.try_emplace(path, std::move(validator)).first->second;
+        const std::scoped_lock lock(MtxJsonValidatorMap);
+        return JsonValidatorMap.try_emplace(path, std::move(validator)).first->second;
     }
 }

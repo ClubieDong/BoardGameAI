@@ -44,7 +44,7 @@ find_package(nlohmann_json_schema_validator REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json_schema_validator)
 target_link_libraries(${TEST_PROJECT_NAME} PRIVATE nlohmann_json_schema_validator)
 
-# moodycamel/ConcurrentQueue
-find_package(unofficial-concurrentqueue CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::concurrentqueue::concurrentqueue)
-target_link_libraries(${TEST_PROJECT_NAME} PRIVATE unofficial::concurrentqueue::concurrentqueue)
+# Intel's oneTBB
+find_package(TBB CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
+target_link_libraries(${TEST_PROJECT_NAME} PRIVATE TBB::tbb)

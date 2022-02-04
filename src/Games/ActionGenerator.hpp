@@ -22,6 +22,7 @@ public:
     // because every valid state must have at least one action.
     virtual std::unique_ptr<Action> FirstAction(const Data &data) const = 0;
     virtual bool NextAction(const Data &data, Action &action) const = 0;
+    virtual void Update(Data &, const Action &) const {}
 
     template <typename Func>
     void ForEach(const Data &data, Func func) const {
