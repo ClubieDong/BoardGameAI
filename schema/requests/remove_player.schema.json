@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "StopThinking Request",
-    "description": "Let the specified player stop thinking",
+    "title": "RemovePlayer Request",
+    "description": "Remove the specified player record",
     "type": "object",
     "properties": {
         "gameID": {
@@ -13,7 +13,7 @@
             "$ref": "basic/id.schema.json"
         },
         "playerID": {
-            "description": "The ID of the player to stop thinking",
+            "description": "The ID of the player to be removed",
             "$ref": "basic/id.schema.json"
         }
     },

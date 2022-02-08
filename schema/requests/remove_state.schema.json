@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "StopThinking Request",
-    "description": "Let the specified player stop thinking",
+    "title": "RemoveState Request",
+    "description": "Remove the specified state record",
     "type": "object",
     "properties": {
         "gameID": {
@@ -9,18 +9,13 @@
             "$ref": "basic/id.schema.json"
         },
         "stateID": {
-            "description": "The ID of the state to which the action generator belongs",
-            "$ref": "basic/id.schema.json"
-        },
-        "playerID": {
-            "description": "The ID of the player to stop thinking",
+            "description": "The ID of the state to be removed",
             "$ref": "basic/id.schema.json"
         }
     },
     "required": [
         "gameID",
-        "stateID",
-        "playerID"
+        "stateID"
     ],
     "additionalProperties": false
 }

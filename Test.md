@@ -1,56 +1,72 @@
 # Test
 
-## Echo
+## echo
 ```json
 {"type":"echo","data":{"sleepTime":1.5,"data":"Hello world"}}
 ```
 
-## Create game
+## add_game
 ```json
 {"type":"add_game","data":{"type":"tic_tac_toe","data":{}}}
 ```
 
-## Create default state
+## add_state
 ```json
 {"type":"add_state","data":{"gameID":1}}
-```
-
-## Create state
-```json
 {"type":"add_state","data":{"gameID":1,"data":{"board":[[0,0,0],[0,1,0],[0,0,0]]}}}
 ```
 
-## Create player
+## add_player
 ```json
-{"type":"add_player","data":{"stateID":1,"type":"random_move","data":{"actionGenerator":{"type":"default","data":{}}}}}
+{"type":"add_player","data":{"gameID":1,"stateID":1,"type":"random_move","data":{"actionGenerator":{"type":"default","data":{}}}}}
 ```
 
-## Create action generator
+## add_action_generator
 ```json
-{"type":"add_action_generator","data":{"stateID":1,"type":"default","data":{}}}
+{"type":"add_action_generator","data":{"gameID":1,"stateID":1,"type":"default","data":{}}}
 ```
 
-## Generate actions
+## remove_game
 ```json
-{"type":"generate_actions","data":{"actionGeneratorID":1}}
+{"type":"remove_game","data":{"gameID":1}}
 ```
 
-## Take action
+## remove_state
 ```json
-{"type":"take_action","data":{"stateID":1,"action":{"row":1,"col":1}}}
+{"type":"remove_state","data":{"gameID":1,"stateID":1}}
 ```
 
-## Start thinking
+## remove_player
 ```json
-{"type":"start_thinking","data":{"playerID":1}}
+{"type":"remove_player","data":{"gameID":1,"stateID":1,"playerID":1}}
 ```
 
-## Stop thinking
+## remove_action_generator
 ```json
-{"type":"stop_thinking","data":{"playerID":1}}
+{"type":"remove_action_generator","data":{"gameID":1,"stateID":1,"actionGeneratorID":1}}
 ```
 
-## Get best action
+## generate_actions
 ```json
-{"type":"get_best_action","data":{"playerID":1,"maxThinkTime":1.5}}
+{"type":"generate_actions","data":{"gameID":1,"stateID":1,"actionGeneratorID":1}}
+```
+
+## take_action
+```json
+{"type":"take_action","data":{"gameID":1,"stateID":1,"action":{"row":1,"col":1}}}
+```
+
+## start_thinking
+```json
+{"type":"start_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
+```
+
+## stop_thinking
+```json
+{"type":"stop_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
+```
+
+## get_best_action
+```json
+{"type":"get_best_action","data":{"gameID":1,"stateID":1,"playerID":1,"maxThinkTime":1.5}}
 ```

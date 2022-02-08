@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "RemoveGame Request",
+    "description": "Remove the specified game record",
+    "type": "object",
+    "properties": {
+        "gameID": {
+            "description": "The ID of the game to be removed",
+            "$ref": "basic/id.schema.json"
+        }
+    },
+    "required": [
+        "gameID"
+    ],
+    "additionalProperties": false
+}

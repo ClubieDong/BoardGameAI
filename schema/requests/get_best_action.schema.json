@@ -4,8 +4,16 @@
     "description": "Get the best action calculated by the specified player",
     "type": "object",
     "properties": {
+        "gameID": {
+            "description": "The ID of the game to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "stateID": {
+            "description": "The ID of the state to which the action generator belongs",
+            "$ref": "basic/id.schema.json"
+        },
         "playerID": {
-            "description": "Player ID",
+            "description": "The ID of the player, from which the best action is got",
             "$ref": "basic/id.schema.json"
         },
         "maxThinkTime": {
@@ -15,6 +23,8 @@
         }
     },
     "required": [
+        "gameID",
+        "stateID",
         "playerID"
     ],
     "additionalProperties": false

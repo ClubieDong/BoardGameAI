@@ -4,15 +4,20 @@
     "description": "Apply an action to the specified state",
     "type": "object",
     "properties": {
+        "gameID": {
+            "description": "The ID of the game to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
         "stateID": {
-            "description": "State ID, to which the action is applied",
+            "description": "The ID of the state, to which the action is applied",
             "$ref": "basic/id.schema.json"
         },
         "action": {
-            "description": "Action to be applied. Check the 'actions' folder for more information"
+            "description": "The action to be applied. Check the 'actions' folder for more information"
         }
     },
     "required": [
+        "gameID",
         "stateID",
         "action"
     ],

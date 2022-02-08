@@ -5,7 +5,7 @@
     "type": "object",
     "properties": {
         "gameID": {
-            "description": "The game ID to which the state belongs",
+            "description": "The ID of the game to which the new state belongs",
             "$ref": "basic/id.schema.json"
         },
         "data": {

@@ -11,7 +11,7 @@ Default::Default(const ::Game &, const ::State &state, const nlohmann::json &dat
 
 std::unique_ptr<::Action> Default::FirstAction(const ::ActionGenerator::Data &data) const {
     auto action = std::make_unique<Action>(0, -1);
-    const auto isValid = NextAction(data, *action);
+    [[maybe_unused]] const auto isValid = NextAction(data, *action);
     assert(isValid);
     return action;
 }

@@ -4,12 +4,22 @@
     "description": "Let the specified player start thinking",
     "type": "object",
     "properties": {
+        "gameID": {
+            "description": "The ID of the game to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "stateID": {
+            "description": "The ID of the state to which the action generator belongs",
+            "$ref": "basic/id.schema.json"
+        },
         "playerID": {
-            "description": "Player ID",
+            "description": "The ID of the player to start thinking",
             "$ref": "basic/id.schema.json"
         }
     },
     "required": [
+        "gameID",
+        "stateID",
         "playerID"
     ],
     "additionalProperties": false

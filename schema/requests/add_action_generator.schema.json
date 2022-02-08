@@ -4,8 +4,12 @@
     "description": "Add an action generator record",
     "type": "object",
     "properties": {
+        "gameID": {
+            "description": "The ID of the game to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
         "stateID": {
-            "description": "The state ID to which the action generator belongs",
+            "description": "The ID of the state to which the new action generator belongs",
             "$ref": "basic/id.schema.json"
         },
         "type": {
@@ -17,6 +21,7 @@
         }
     },
     "required": [
+        "gameID",
         "stateID",
         "type",
         "data"

@@ -4,12 +4,22 @@
     "description": "Generate all valid actions using the specified action generator",
     "type": "object",
     "properties": {
+        "gameID": {
+            "description": "The ID of the game to which the state belongs",
+            "$ref": "basic/id.schema.json"
+        },
+        "stateID": {
+            "description": "The ID of the state to which the action generator belongs",
+            "$ref": "basic/id.schema.json"
+        },
         "actionGeneratorID": {
-            "description": "Action generator ID, which is used to generate actions",
+            "description": "The ID of the action generator, which is used to generate actions",
             "$ref": "basic/id.schema.json"
         }
     },
     "required": [
+        "gameID",
+        "stateID",
         "actionGeneratorID"
     ],
     "additionalProperties": false
