@@ -25,6 +25,7 @@ class Game : public NonCopyableNonMoveable {
 public:
     virtual ~Game() = default;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;
+    virtual unsigned int GetNextPlayer(const State &state) const = 0;
     // TODO: Small vector optimization
     virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0;
 

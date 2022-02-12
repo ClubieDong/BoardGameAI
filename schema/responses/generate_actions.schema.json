@@ -8,7 +8,8 @@
             "type": "array",
             "item": {
                 "description": "Check the 'actions' folder for more information"
-            }
+            },
+            "minItems": 1
         }
     },
     "required": [

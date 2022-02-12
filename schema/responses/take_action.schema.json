@@ -8,7 +8,7 @@
             "type": "boolean"
         },
         "state": {
-            "description": "State after the action is applied. Check the 'states' folder for more information"
+            "description": "The state after the action is applied. Check the 'states' folder for more information"
         }
     },
     "oneOf": [
@@ -16,8 +16,19 @@
             "properties": {
                 "finished": {
                     "const": true
+                },
+                "result": {
+                    "description": "Points earned by each player",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 1
                 }
             },
+            "required": [
+                "result"
+            ],
             "additionalProperties": false
         },
         {
@@ -25,16 +36,14 @@
                 "finished": {
                     "const": false
                 },
-                "result": {
-                    "description": "Points earned by each player",
-                    "type": "array",
-                    "items": {
-                        "type": "number"
-                    }
+                "nextPlayer": {
+                    "description": "The index of the next player to move, starting from 0",
+                    "type": "integer",
+                    "minimum": 0
                 }
             },
             "required": [
-                "result"
+                "nextPlayer"
             ],
             "additionalProperties": false
         }

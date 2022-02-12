@@ -23,8 +23,8 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
     const auto &action = static_cast<const Action &>(action_);
     assert(IsValidAction(state, action));
 
-    const auto nextPlayer = (state.MoveCount & 1) + 1;
-    state.Board[action.Row][action.Col] = nextPlayer;
+    const auto nextPlayer = GetNextPlayer(state_);
+    state.Board[action.Row][action.Col] = nextPlayer + 1;
     ++state.MoveCount;
     const bool win = (state.Board[0][0] & state.Board[0][1] & state.Board[0][2]) | // Row
                      (state.Board[1][0] & state.Board[1][1] & state.Board[1][2]) |
@@ -36,7 +36,7 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
                      (state.Board[0][2] & state.Board[1][1] & state.Board[2][0]);  // Counter diagonal
     if (win) {
         std::optional<std::vector<double>> res(std::in_place, 2, 0.0);
-        (*res)[nextPlayer - 1] = 1.0;
+        (*res)[nextPlayer] = 1.0;
         return res;
     }
     if (state.MoveCount == 9) // Draw

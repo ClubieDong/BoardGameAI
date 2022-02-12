@@ -71,13 +71,15 @@ nlohmann::json Server::AddGame(const nlohmann::json &data) {
 
 nlohmann::json Server::AddState(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/add_state.schema.json").validate(data);
-    unsigned int id;
+    nlohmann::json response;
     AccessGame(data, [&](GameRecord &gameRecord) {
         const auto &game = *gameRecord.GamePtr;
         auto state = data.contains("data") ? State::Create(game, data["data"]) : State::Create(game);
-        id = gameRecord.SubStates.Emplace(std::move(state));
+        response["state"] = state->GetJson();
+        response["nextPlayer"] = game.GetNextPlayer(*state);
+        response["stateID"] = gameRecord.SubStates.Emplace(std::move(state));
     });
-    return {{"stateID", id}};
+    return response;
 }
 
 nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
@@ -147,8 +149,7 @@ nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
 
 nlohmann::json Server::TakeAction(const nlohmann::json &data) {
     Util::GetJsonValidator("requests/take_action.schema.json").validate(data);
-    std::optional<std::vector<double>> result;
-    nlohmann::json stateJson;
+    nlohmann::json response;
     AccessState(data, [&](const GameRecord &gameRecord, const StateRecord &stateRecord) {
         const auto &game = *gameRecord.GamePtr;
         auto &state = *stateRecord.StatePtr;
@@ -156,8 +157,14 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
         if (!game.IsValidAction(state, *action))
             throw std::invalid_argument("The action is invalid");
         const std::scoped_lock lock(stateRecord.MtxState);
-        result = game.TakeAction(state, *action);
-        stateJson = state.GetJson();
+        auto result = game.TakeAction(state, *action);
+        // Build response
+        response["finished"] = result.has_value();
+        response["state"] = state.GetJson();
+        if (result)
+            response["result"] = std::move(*result);
+        else
+            response["nextPlayer"] = game.GetNextPlayer(state);
         // Concurrently update players and action generators,
         // do not use tbb::parallel_invoke as those functions are most likely not CPU intensive
         std::thread threadUpdatePlayers([&]() {
@@ -176,12 +183,6 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
         threadUpdatePlayers.join();
         threadUpdateActionGenerators.join();
     });
-    nlohmann::json response = {
-        {"finished", result.has_value()},
-        {"state", std::move(stateJson)},
-    };
-    if (result)
-        response["result"] = std::move(*result);
     return response;
 }
 

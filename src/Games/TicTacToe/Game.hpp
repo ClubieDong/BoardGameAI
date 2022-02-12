@@ -42,6 +42,10 @@ public:
         const auto &action = static_cast<const Action &>(action_);
         return action.Row < 3 && action.Col < 3 && state.Board[action.Row][action.Col] == 0;
     }
+    virtual unsigned int GetNextPlayer(const ::State &state_) const override {
+        const auto &state = static_cast<const State &>(state_);
+        return state.MoveCount & 1;
+    }
     virtual std::optional<std::vector<double>> TakeAction(::State &state, const ::Action &action) const override;
 };
 } // namespace tic_tac_toe

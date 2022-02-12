@@ -6,10 +6,20 @@
         "stateID": {
             "description": "State ID, used to identify this state in subsequent requests",
             "$ref": "basic/id.schema.json"
+        },
+        "state": {
+            "description": "The created state. Check the 'states' folder for more information"
+        },
+        "nextPlayer": {
+            "description": "The index of the next player to move, starting from 0",
+            "type": "integer",
+            "minimum": 0
         }
     },
     "required": [
-        "stateID"
+        "stateID",
+        "state",
+        "nextPlayer"
     ],
     "additionalProperties": false
 }
