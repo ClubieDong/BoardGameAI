@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Utilities/Helpers.hpp"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -8,7 +9,7 @@ class Game;
 class State;
 class Action;
 
-class Player {
+class Player : public NonCopyableNonMoveable {
 public:
     virtual ~Player() = default;
     virtual void StartThinking() {}

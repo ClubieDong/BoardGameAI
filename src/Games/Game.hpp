@@ -1,29 +1,27 @@
 #pragma once
 
+#include "../Utilities/Helpers.hpp"
 #include <memory>
 #include <nlohmann/json.hpp>
 
 class Game;
 
-class State {
+class State : public ClonableEqualable<State> {
 public:
-    virtual ~State() = default;
     virtual nlohmann::json GetJson() const = 0;
 
     static std::unique_ptr<State> Create(const Game &game);
     static std::unique_ptr<State> Create(const Game &game, const nlohmann::json &data);
 };
 
-class Action {
+class Action : public ClonableEqualable<Action> {
 public:
-    virtual ~Action() = default;
     virtual nlohmann::json GetJson() const = 0;
-    virtual std::unique_ptr<Action> Clone() const = 0;
 
     static std::unique_ptr<Action> Create(const Game &game, const nlohmann::json &data);
 };
 
-class Game {
+class Game : public NonCopyableNonMoveable {
 public:
     virtual ~Game() = default;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;

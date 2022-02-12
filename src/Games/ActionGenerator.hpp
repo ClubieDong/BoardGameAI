@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Utilities/Helpers.hpp"
 #include <cassert>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -8,12 +9,10 @@ class Game;
 class State;
 class Action;
 
-class ActionGenerator {
+class ActionGenerator : public NonCopyableNonMoveable {
 public:
-    class Data {
+    class Data : public ClonableEqualable<Data> {
     public:
-        virtual ~Data() = default;
-
         static std::unique_ptr<Data> Create(const ActionGenerator &actionGenerator);
     };
 

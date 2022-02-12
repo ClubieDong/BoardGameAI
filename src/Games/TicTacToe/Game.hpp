@@ -7,17 +7,20 @@
 #include <nlohmann/json.hpp>
 
 namespace tic_tac_toe {
-class State : public ::State {
+class State : public ::State::CRTP<State> {
 public:
     unsigned char MoveCount;
     std::array<std::array<unsigned char, 3>, 3> Board;
 
     explicit State(const ::Game &) : MoveCount(0), Board() {}
     explicit State(const nlohmann::json &data);
+    friend bool operator==(const State &left, const State &right) {
+        return left.MoveCount == right.MoveCount && left.Board == right.Board;
+    }
     virtual nlohmann::json GetJson() const override { return {{"board", Board}}; }
 };
 
-class Action : public ::Action {
+class Action : public ::Action::CRTP<Action> {
 public:
     unsigned char Row, Col;
 
@@ -25,8 +28,10 @@ public:
     // because such invalid actions are sometimes required, such as in the default action generator.
     explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
     explicit Action(const nlohmann::json &data);
+    friend bool operator==(const Action &left, const Action &right) {
+        return left.Row == right.Row && left.Col == right.Col;
+    }
     virtual nlohmann::json GetJson() const override { return {{"row", Row}, {"col", Col}}; }
-    virtual std::unique_ptr<::Action> Clone() const override { return std::make_unique<Action>(*this); }
 };
 
 class Game : public ::Game {

@@ -14,6 +14,11 @@ private:
     const State *m_State;
 
 public:
+    class Data : public ::ActionGenerator::Data::CRTP<Data> {
+    public:
+        friend bool operator==(const Data &, const Data &) { return true; }
+    };
+
     explicit Default(const ::Game &game, const ::State &state, const nlohmann::json &data);
 
     virtual std::unique_ptr<::Action> FirstAction(const ::ActionGenerator::Data &data) const override;

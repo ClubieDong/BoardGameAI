@@ -1,4 +1,4 @@
-#include "../Utilities/Hash.hpp"
+#include "../Utilities/Helpers.hpp"
 #include "ActionGenerator.hpp"
 #include "TicTacToe/ActionGenerators/Default.hpp"
 #include "TicTacToe/Game.hpp"
