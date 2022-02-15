@@ -4,6 +4,7 @@
 #include <cassert>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <string_view>
 
 class Game;
 class State;
@@ -17,6 +18,7 @@ public:
     };
 
     virtual ~ActionGenerator() = default;
+    virtual std::string_view GetType() const = 0;
     // This function should not return a null pointer,
     // because every valid state must have at least one action.
     virtual std::unique_ptr<Action> FirstAction(const Data &data) const = 0;

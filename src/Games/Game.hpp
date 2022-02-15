@@ -3,6 +3,7 @@
 #include "../Utilities/Helpers.hpp"
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <string_view>
 
 class Game;
 
@@ -24,6 +25,7 @@ public:
 class Game : public NonCopyableNonMoveable {
 public:
     virtual ~Game() = default;
+    virtual std::string_view GetType() const = 0;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;
     virtual unsigned int GetNextPlayer(const State &state) const = 0;
     // TODO: Small vector optimization

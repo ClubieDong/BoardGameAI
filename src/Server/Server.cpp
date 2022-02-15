@@ -41,20 +41,23 @@ void Server::Serve(Server *self, std::string &&reqStr) {
             response["id"] = request["id"];
         Util::GetJsonValidator("request.schema.json").validate(request);
         const std::string &type = request["type"];
-        const nlohmann::json &data = request["data"];
+        const nlohmann::json &reqData = request["data"];
+        Util::GetJsonValidator("requests/" + type + ".schema.json").validate(reqData);
         const auto service = ServiceMap.at(type);
-        response["data"] = (self->*service)(data);
+        auto respData = (self->*service)(reqData);
+        Util::GetJsonValidator("responses/" + type + ".schema.json").validate(respData);
+        response["data"] = std::move(respData);
         response["success"] = true;
     } catch (const std::exception &e) {
         response["errMsg"] = e.what();
         response["success"] = false;
     }
+    Util::GetJsonValidator("response.schema.json").validate(response);
     const std::scoped_lock lock(self->m_MtxOutputStream);
     self->m_OutputStream << response << std::endl;
 }
 
 nlohmann::json Server::Echo(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/echo.schema.json").validate(data);
     const std::chrono::duration<double> time(data["sleepTime"]);
     std::this_thread::sleep_for(time);
     if (!data.contains("data"))
@@ -63,14 +66,12 @@ nlohmann::json Server::Echo(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::AddGame(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/add_game.schema.json").validate(data);
     auto game = Game::Create(data["type"], data["data"]);
     const auto id = m_GameMap.Emplace(std::move(game));
     return {{"gameID", id}};
 }
 
 nlohmann::json Server::AddState(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/add_state.schema.json").validate(data);
     nlohmann::json response;
     AccessGame(data, [&](GameRecord &gameRecord) {
         const auto &game = *gameRecord.GamePtr;
@@ -83,7 +84,6 @@ nlohmann::json Server::AddState(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/add_player.schema.json").validate(data);
     unsigned int id;
     AccessState(data, [&](const GameRecord &gameRecord, StateRecord &stateRecord) {
         auto player = Player::Create(data["type"], *gameRecord.GamePtr, *stateRecord.StatePtr, data["data"]);
@@ -93,7 +93,6 @@ nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/add_action_generator.schema.json").validate(data);
     unsigned int id;
     AccessState(data, [&](const GameRecord &gameRecord, StateRecord &stateRecord) {
         auto actionGenerator =
@@ -105,26 +104,22 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::RemoveGame(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/remove_game.schema.json").validate(data);
     m_GameMap.Erase(data["gameID"]);
     return nlohmann::json::object();
 }
 
 nlohmann::json Server::RemoveState(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/remove_state.schema.json").validate(data);
     AccessGame(data, [&](GameRecord &gameRecord) { gameRecord.SubStates.Erase(data["stateID"]); });
     return nlohmann::json::object();
 }
 
 nlohmann::json Server::RemovePlayer(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/remove_player.schema.json").validate(data);
     AccessState(data,
                 [&](const GameRecord &, StateRecord &stateRecord) { stateRecord.SubPlayers.Erase(data["playerID"]); });
     return nlohmann::json::object();
 }
 
 nlohmann::json Server::RemoveActionGenerator(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/remove_action_generator.schema.json").validate(data);
     AccessState(data, [&](const GameRecord &, StateRecord &stateRecord) {
         stateRecord.SubActionGenerators.Erase(data["actionGeneratorID"]);
     });
@@ -132,7 +127,6 @@ nlohmann::json Server::RemoveActionGenerator(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/generate_actions.schema.json").validate(data);
     nlohmann::json actions;
     AccessActionGenerator(data, [&](const GameRecord &, const StateRecord &stateRecord,
                                     const ActionGeneratorRecord &actionGeneratorRecord) {
@@ -148,7 +142,6 @@ nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::TakeAction(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/take_action.schema.json").validate(data);
     nlohmann::json response;
     AccessState(data, [&](const GameRecord &gameRecord, const StateRecord &stateRecord) {
         const auto &game = *gameRecord.GamePtr;
@@ -187,7 +180,6 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::StartThinking(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/start_thinking.schema.json").validate(data);
     AccessPlayer(data, [&](const GameRecord &, const StateRecord &stateRecord, const PlayerRecord &playerRecord) {
         // Always lock state before locking player or action generator
         const std::shared_lock lockState(stateRecord.MtxState);
@@ -198,7 +190,6 @@ nlohmann::json Server::StartThinking(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::StopThinking(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/stop_thinking.schema.json").validate(data);
     AccessPlayer(data, [&](const GameRecord &, const StateRecord &stateRecord, const PlayerRecord &playerRecord) {
         // Always lock state before locking player or action generator
         const std::shared_lock lockState(stateRecord.MtxState);
@@ -209,7 +200,6 @@ nlohmann::json Server::StopThinking(const nlohmann::json &data) {
 }
 
 nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
-    Util::GetJsonValidator("requests/get_best_action.schema.json").validate(data);
     std::optional<std::chrono::duration<double>> time;
     if (data.contains("maxThinkTime"))
         time = std::chrono::duration<double>(data["maxThinkTime"]);

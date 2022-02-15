@@ -19,8 +19,10 @@ public:
         friend bool operator==(const Data &, const Data &) { return true; }
     };
 
-    explicit Default(const ::Game &game, const ::State &state, const nlohmann::json &data);
+    explicit Default(const ::Game &, const ::State &state, const nlohmann::json &)
+        : m_State(static_cast<const State *>(&state)) {}
 
+    virtual std::string_view GetType() const override { return "tic_tac_toe/default"; }
     virtual std::unique_ptr<::Action> FirstAction(const ::ActionGenerator::Data &data) const override;
     virtual bool NextAction(const ::ActionGenerator::Data &, ::Action &action_) const override {
         auto &action = static_cast<Action &>(action_);

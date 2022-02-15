@@ -17,6 +17,7 @@
                 "finished": {
                     "const": true
                 },
+                "state": {},
                 "result": {
                     "description": "Points earned by each player",
                     "type": "array",
@@ -36,6 +37,7 @@
                 "finished": {
                     "const": false
                 },
+                "state": {},
                 "nextPlayer": {
                     "description": "The index of the next player to move, starting from 0",
                     "type": "integer",

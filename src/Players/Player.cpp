@@ -1,6 +1,6 @@
 #include "Player.hpp"
+#include "../Utilities/Utilities.hpp"
 #include "RandomMove/Player.hpp"
-#include <typeindex>
 #include <unordered_map>
 
 template <typename T>
@@ -15,6 +15,7 @@ static const std::unordered_map<std::string, PlayerCreatorFunc> PlayerCreatorMap
 
 std::unique_ptr<Player> Player::Create(const std::string &type, const Game &game, const State &state,
                                        const nlohmann::json &data) {
+    Util::GetJsonValidator("players/" + type + ".schema.json").validate(data);
     const auto creator = PlayerCreatorMap.at(type);
     return creator(game, state, data);
 }

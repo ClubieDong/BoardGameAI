@@ -5,7 +5,6 @@
 
 namespace random_move {
 Player::Player(const Game &game, const State &state, const nlohmann::json &data) : m_State(&state) {
-    Util::GetJsonValidator("players/random_move.schema.json").validate(data);
     const auto &actionGeneratorData = data["actionGenerator"];
     const std::string &type = actionGeneratorData["type"];
     m_ActionGenerator = ActionGenerator::Create(type, game, state, actionGeneratorData["data"]);

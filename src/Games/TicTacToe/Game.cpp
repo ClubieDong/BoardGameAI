@@ -3,21 +3,6 @@
 #include <cassert>
 
 namespace tic_tac_toe {
-State::State(const nlohmann::json &data) {
-    Util::GetJsonValidator("states/tic_tac_toe.schema.json").validate(data);
-    std::tie(Board, MoveCount) = Util::Json2Board<3, 3, 2>(data["board"]);
-}
-
-Action::Action(const nlohmann::json &data) {
-    Util::GetJsonValidator("actions/tic_tac_toe.schema.json").validate(data);
-    Row = data["row"];
-    Col = data["col"];
-}
-
-Game::Game(const nlohmann::json &data) {
-    Util::GetJsonValidator("games/tic_tac_toe.schema.json").validate(data);
-}
-
 std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Action &action_) const {
     auto &state = static_cast<State &>(state_);
     const auto &action = static_cast<const Action &>(action_);

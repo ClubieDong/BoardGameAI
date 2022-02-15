@@ -31,6 +31,7 @@ find_package(GTest CONFIG REQUIRED)
 target_link_libraries(${TEST_PROJECT_NAME} PRIVATE GTest::gtest_main)
 
 # pthread
+find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 target_link_libraries(${TEST_PROJECT_NAME} PRIVATE Threads::Threads)
 

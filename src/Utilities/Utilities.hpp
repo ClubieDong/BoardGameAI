@@ -4,12 +4,11 @@
 #include <nlohmann/json.hpp>
 #include <random>
 #include <shared_mutex>
-#include <string_view>
 #include <unordered_map>
 
 class Util {
 public:
-    static const nlohmann::json_schema::json_validator &GetJsonValidator(std::string_view path);
+    static const nlohmann::json_schema::json_validator &GetJsonValidator(const std::string &path);
 
     template <std::size_t RowCount, std::size_t ColCount, unsigned char PlayerCount>
     static std::pair<std::array<std::array<unsigned char, ColCount>, RowCount>, unsigned int>

@@ -13,7 +13,9 @@ public:
     std::array<std::array<unsigned char, 3>, 3> Board;
 
     explicit State(const ::Game &) : MoveCount(0), Board() {}
-    explicit State(const nlohmann::json &data);
+    explicit State(const nlohmann::json &data) {
+        std::tie(Board, MoveCount) = Util::Json2Board<3, 3, 2>(data["board"]);
+    }
     friend bool operator==(const State &left, const State &right) {
         return left.MoveCount == right.MoveCount && left.Board == right.Board;
     }
@@ -27,7 +29,7 @@ public:
     // This constructor does not perform validity checks on the parameters,
     // because such invalid actions are sometimes required, such as in the default action generator.
     explicit Action(unsigned char row, unsigned char col) : Row(row), Col(col) {}
-    explicit Action(const nlohmann::json &data);
+    explicit Action(const nlohmann::json &data) : Row(data["row"]), Col(data["col"]) {}
     friend bool operator==(const Action &left, const Action &right) {
         return left.Row == right.Row && left.Col == right.Col;
     }
@@ -36,7 +38,8 @@ public:
 
 class Game : public ::Game {
 public:
-    explicit Game(const nlohmann::json &data);
+    explicit Game(const nlohmann::json &) {}
+    virtual std::string_view GetType() const override { return "tic_tac_toe"; }
     virtual bool IsValidAction(const ::State &state_, const ::Action &action_) const override {
         const auto &state = static_cast<const State &>(state_);
         const auto &action = static_cast<const Action &>(action_);

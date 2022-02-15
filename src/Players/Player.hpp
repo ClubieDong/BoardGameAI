@@ -4,6 +4,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <string_view>
 
 class Game;
 class State;
@@ -12,6 +13,7 @@ class Action;
 class Player : public NonCopyableNonMoveable {
 public:
     virtual ~Player() = default;
+    virtual std::string_view GetType() const = 0;
     virtual void StartThinking() {}
     virtual void StopThinking() {}
     virtual std::unique_ptr<Action> GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) = 0;
