@@ -4,7 +4,7 @@
 TEST(TicTacToe_State, Constructor) {
     { // Create default state
         const tic_tac_toe::Game game("{}"_json);
-        const tic_tac_toe::State state(game);
+        const tic_tac_toe::State state;
         EXPECT_EQ(state.MoveCount, 0);
         EXPECT_EQ(state.Board, (decltype(state.Board){0, 0, 0, 0, 0, 0, 0, 0, 0}));
     }
@@ -21,8 +21,9 @@ TEST(TicTacToe_State, GetJson) {
     const auto expect = R"({
         "board": [[1, 2, 1], [2, 1, 2], [0, 0, 0]]
     })"_json;
+    const tic_tac_toe::Game game("{}"_json);
     const tic_tac_toe::State state(expect);
-    const auto actual = state.GetJson();
+    const auto actual = game.GetJsonOfState(state);
     EXPECT_EQ(actual, expect);
 }
 
@@ -40,8 +41,9 @@ TEST(TicTacToe_Action, Constructor) {
 }
 
 TEST(TicTacToe_Action, GetJson) {
+    const tic_tac_toe::Game game("{}"_json);
     const tic_tac_toe::Action action(1, 2);
-    const auto json = action.GetJson();
+    const auto json = game.GetJsonOfAction(action);
     EXPECT_EQ(json, R"({"row": 1, "col": 2})"_json);
 }
 
@@ -75,7 +77,7 @@ TEST(TicTacToe_Game, IsValidAction) {
 TEST(TicTacToe_Game, TakeAction) {
     const tic_tac_toe::Game game("{}"_json);
     { // Non-terminal action
-        tic_tac_toe::State state(game);
+        tic_tac_toe::State state;
         const tic_tac_toe::Action action(1, 1);
         const auto result = game.TakeAction(state, action);
         EXPECT_EQ(result, std::nullopt);

@@ -1,5 +1,4 @@
 #include "Game.hpp"
-#include "../../Utilities/Utilities.hpp"
 #include <cassert>
 
 namespace tic_tac_toe {

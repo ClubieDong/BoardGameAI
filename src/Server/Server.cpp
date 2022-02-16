@@ -75,8 +75,8 @@ nlohmann::json Server::AddState(const nlohmann::json &data) {
     nlohmann::json response;
     AccessGame(data, [&](GameRecord &gameRecord) {
         const auto &game = *gameRecord.GamePtr;
-        auto state = data.contains("data") ? State::Create(game, data["data"]) : State::Create(game);
-        response["state"] = state->GetJson();
+        auto state = data.contains("data") ? game.CreateState(data["data"]) : game.CreateDefaultState();
+        response["state"] = game.GetJsonOfState(*state);
         response["nextPlayer"] = game.GetNextPlayer(*state);
         response["stateID"] = gameRecord.SubStates.Emplace(std::move(state));
     });
@@ -97,7 +97,7 @@ nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
     AccessState(data, [&](const GameRecord &gameRecord, StateRecord &stateRecord) {
         auto actionGenerator =
             ActionGenerator::Create(data["type"], *gameRecord.GamePtr, *stateRecord.StatePtr, data["data"]);
-        auto actionGeneratorData = ActionGenerator::Data::Create(*actionGenerator);
+        auto actionGeneratorData = actionGenerator->CreateData();
         id = stateRecord.SubActionGenerators.Emplace(std::move(actionGenerator), std::move(actionGeneratorData));
     });
     return {{"actionGeneratorID", id}};
@@ -128,15 +128,16 @@ nlohmann::json Server::RemoveActionGenerator(const nlohmann::json &data) {
 
 nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
     nlohmann::json actions;
-    AccessActionGenerator(data, [&](const GameRecord &, const StateRecord &stateRecord,
+    AccessActionGenerator(data, [&](const GameRecord &gameRecord, const StateRecord &stateRecord,
                                     const ActionGeneratorRecord &actionGeneratorRecord) {
+        const auto &game = *gameRecord.GamePtr;
         const auto &actionGenerator = *actionGeneratorRecord.ActionGeneratorPtr;
         const auto &actionGeneratorData = *actionGeneratorRecord.ActionGeneratorDataPtr;
         // Always lock state before locking player or action generator
         const std::shared_lock lockState(stateRecord.MtxState);
         const std::shared_lock lockActionGenerator(actionGeneratorRecord.MtxActionGeneratorData);
         actionGenerator.ForEach(actionGeneratorData,
-                                [&](const Action &action) { actions.push_back(action.GetJson()); });
+                                [&](const Action &action) { actions.push_back(game.GetJsonOfAction(action)); });
     });
     return {{"actions", actions}};
 }
@@ -146,14 +147,14 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
     AccessState(data, [&](const GameRecord &gameRecord, const StateRecord &stateRecord) {
         const auto &game = *gameRecord.GamePtr;
         auto &state = *stateRecord.StatePtr;
-        const auto action = Action::Create(game, data["action"]);
+        const auto action = game.CreateAction(data["action"]);
         if (!game.IsValidAction(state, *action))
             throw std::invalid_argument("The action is invalid");
         const std::scoped_lock lock(stateRecord.MtxState);
         auto result = game.TakeAction(state, *action);
         // Build response
         response["finished"] = result.has_value();
-        response["state"] = state.GetJson();
+        response["state"] = game.GetJsonOfState(state);
         if (result)
             response["result"] = std::move(*result);
         else
@@ -203,14 +204,20 @@ nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
     std::optional<std::chrono::duration<double>> time;
     if (data.contains("maxThinkTime"))
         time = std::chrono::duration<double>(data["maxThinkTime"]);
-    std::unique_ptr<Action> bestAction;
-    AccessPlayer(data, [&](const GameRecord &, const StateRecord &stateRecord, const PlayerRecord &playerRecord) {
-        // Always lock state before locking player or action generator
-        const std::shared_lock lockState(stateRecord.MtxState);
-        const std::scoped_lock lock(playerRecord.MtxPlayer);
-        bestAction = playerRecord.PlayerPtr->GetBestAction(time);
-    });
-    return {{"action", bestAction->GetJson()}};
+    nlohmann::json bestActionJson;
+    AccessPlayer(data,
+                 [&](const GameRecord &gameRecord, const StateRecord &stateRecord, const PlayerRecord &playerRecord) {
+                     std::unique_ptr<Action> bestAction;
+                     {
+                         // Always lock state before locking player or action generator
+                         const std::shared_lock lockState(stateRecord.MtxState);
+                         const std::scoped_lock lock(playerRecord.MtxPlayer);
+                         bestAction = playerRecord.PlayerPtr->GetBestAction(time);
+                     }
+                     const auto &game = *gameRecord.GamePtr;
+                     bestActionJson = game.GetJsonOfAction(*bestAction);
+                 });
+    return {{"action", std::move(bestActionJson)}};
 }
 
 nlohmann::json Server::QueryDetails(const nlohmann::json &) {

@@ -1,6 +1,4 @@
 #include "Default.hpp"
-#include "../../../Utilities/Utilities.hpp"
-#include "../../Game.hpp"
 #include <cassert>
 
 namespace tic_tac_toe::action_generator {
