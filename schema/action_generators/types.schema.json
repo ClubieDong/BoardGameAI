@@ -9,6 +9,12 @@
             "enum": [
                 "default"
             ]
+        },
+        {
+            "description": "Action generators of gobang",
+            "enum": [
+                "default"
+            ]
         }
     ]
 }

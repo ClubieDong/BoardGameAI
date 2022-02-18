@@ -11,7 +11,6 @@ namespace random_move {
 class Player : public ::Player {
 private:
     const Game *m_Game;
-    const State *m_State;
     std::unique_ptr<ActionGenerator> m_ActionGenerator;
     std::unique_ptr<ActionGenerator::Data> m_ActionGeneratorData;
 

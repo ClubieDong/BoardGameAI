@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace random_move {
-Player::Player(const Game &game, const State &state, const nlohmann::json &data) : m_Game(&game), m_State(&state) {
+Player::Player(const Game &game, const State &state, const nlohmann::json &data) : m_Game(&game) {
     const auto &actionGeneratorData = data["actionGenerator"];
     const std::string &type = actionGeneratorData["type"];
     m_ActionGenerator = ActionGenerator::Create(type, game, state, actionGeneratorData["data"]);

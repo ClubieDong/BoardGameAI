@@ -4,6 +4,7 @@
     "description": "Game type",
     "type": "string",
     "enum": [
-        "tic_tac_toe"
+        "tic_tac_toe",
+        "gobang"
     ]
 }

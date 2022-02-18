@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Gobang State",
+    "description": "Gobang state schema",
+    "type": "object",
+    "properties": {
+        "board": {
+            "description": "15x15 board",
+            "$ref": "basic/board.schema.json"
+        }
+    },
+    "required": [
+        "board"
+    ],
+    "additionalProperties": false
+}

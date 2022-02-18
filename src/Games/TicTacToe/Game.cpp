@@ -7,9 +7,10 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
     const auto &action = static_cast<const Action &>(action_);
     assert(IsValidAction(state, action));
 
-    const auto nextPlayer = GetNextPlayer(state_);
+    const auto nextPlayer = GetNextPlayer(state);
     state.SetGrid(action.Position, nextPlayer);
     ++state.MoveCount;
+
     const auto &bitset = state.BitBoard[nextPlayer];
     const bool win = (bitset[0] & bitset[1] & bitset[2]) | // Row #1
                      (bitset[3] & bitset[4] & bitset[5]) | // Row #2
@@ -19,13 +20,13 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
                      (bitset[2] & bitset[5] & bitset[8]) | // Column #3
                      (bitset[0] & bitset[4] & bitset[8]) | // Main diagonal
                      (bitset[2] & bitset[4] & bitset[6]);  // Counter diagonal
+
+    std::optional<std::vector<double>> res;
     if (win) {
-        std::optional<std::vector<double>> res(std::in_place, 2, 0.0);
+        res.emplace(2, 0.0);
         (*res)[nextPlayer] = 1.0;
-        return res;
-    }
-    if (state.MoveCount == 9) // Draw
-        return std::optional<std::vector<double>>(std::in_place, 2, 0.5);
-    return std::nullopt;
+    } else if (state.MoveCount == 9) // Draw
+        res.emplace(2, 0.5);
+    return res;
 }
 } // namespace tic_tac_toe

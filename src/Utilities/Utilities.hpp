@@ -4,6 +4,7 @@
 #include <nlohmann/json-schema.hpp>
 #include <random>
 #include <string>
+#include <type_traits>
 
 class Util {
 private:
@@ -23,7 +24,7 @@ private:
 
 public:
     template <std::uint64_t Max>
-    using UIntBySize = decltype(UIntBySizeHelper<Max>());
+    using UIntBySize = std::invoke_result_t<decltype(UIntBySizeHelper<Max>)>;
 
     static const nlohmann::json_schema::json_validator &GetJsonValidator(const std::string &path);
 

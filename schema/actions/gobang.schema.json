@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Gobang Action",
+    "description": "Gobang action schema",
+    "type": "object",
+    "properties": {
+        "row": {
+            "description": "Row",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 14
+        },
+        "col": {
+            "description": "Column",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 14
+        }
+    },
+    "required": [
+        "row",
+        "col"
+    ],
+    "additionalProperties": false
+}

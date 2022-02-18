@@ -45,12 +45,7 @@ find_package(nlohmann_json_schema_validator REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json_schema_validator)
 target_link_libraries(${TEST_PROJECT_NAME} PRIVATE nlohmann_json_schema_validator)
 
-# Intel's oneTBB
-find_package(TBB CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
-target_link_libraries(${TEST_PROJECT_NAME} PRIVATE TBB::tbb)
-
 # gcem
 find_package(gcem CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE gcem)
-target_link_libraries(${TEST_PROJECT_NAME} PRIVATE TBB::tbb)
+target_link_libraries(${TEST_PROJECT_NAME} PRIVATE gcem)
