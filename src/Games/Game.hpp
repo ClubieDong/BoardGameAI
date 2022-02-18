@@ -32,7 +32,7 @@ public:
     virtual nlohmann::json GetJsonOfState(const State &state) const = 0;
     virtual nlohmann::json GetJsonOfAction(const Action &action) const = 0;
 
-    virtual unsigned int GetNextPlayer(const State &state) const = 0;
+    virtual unsigned char GetNextPlayer(const State &state) const = 0;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;
     // TODO: Small vector optimization
     virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0;

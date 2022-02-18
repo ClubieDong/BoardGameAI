@@ -1,50 +1,31 @@
 #pragma once
 
+#include <gcem.hpp>
 #include <nlohmann/json-schema.hpp>
-#include <nlohmann/json.hpp>
 #include <random>
-#include <shared_mutex>
-#include <unordered_map>
+#include <string>
 
 class Util {
+private:
+    template <std::uint64_t Max>
+    static constexpr auto UIntBySizeHelper() {
+        constexpr unsigned char bit = gcem::ceil(gcem::log2(Max));
+        // The `else`s before `if`s are needed to prevent compile error "inconsistent deduction for auto return type"
+        if constexpr (bit <= 8)
+            return uint8_t{};
+        else if constexpr (bit <= 16)
+            return uint16_t{};
+        else if constexpr (bit <= 32)
+            return uint32_t{};
+        else if constexpr (bit <= 64)
+            return uint64_t{};
+    }
+
 public:
+    template <std::uint64_t Max>
+    using UIntBySize = decltype(UIntBySizeHelper<Max>());
+
     static const nlohmann::json_schema::json_validator &GetJsonValidator(const std::string &path);
-
-    template <std::size_t RowCount, std::size_t ColCount, unsigned char PlayerCount>
-    static std::pair<std::array<std::array<unsigned char, ColCount>, RowCount>, unsigned int>
-    Json2Board(const nlohmann::json &data) {
-        unsigned int count = 0;
-        std::array<std::array<unsigned char, ColCount>, RowCount> board;
-        Util::GetJsonValidator("basic/board.schema.json").validate(data);
-        if (data.size() != RowCount)
-            throw std::invalid_argument("The number of board rows does not match");
-        for (unsigned int rowIdx = 0; rowIdx < RowCount; ++rowIdx) {
-            const auto &row = data[rowIdx];
-            if (row.size() != ColCount)
-                throw std::invalid_argument("The number of board columns does not match");
-            for (unsigned int colIdx = 0; colIdx < ColCount; ++colIdx) {
-                unsigned char grid = row[colIdx];
-                if (grid > PlayerCount)
-                    throw std::invalid_argument("The grid value exceeds the number of players");
-                board[rowIdx][colIdx] = row[colIdx];
-                if (board[rowIdx][colIdx] != 0)
-                    ++count;
-            }
-        }
-        return {board, count};
-    }
-
-    template <std::size_t RowCount, std::size_t ColCount>
-    static bool NextEmptyGrid(const std::array<std::array<unsigned char, ColCount>, RowCount> &board,
-                              unsigned char &row, unsigned char &col) {
-        do {
-            if (++col >= ColCount)
-                ++row, col = 0;
-            if (row >= RowCount)
-                return false;
-        } while (board[row][col] != 0);
-        return true;
-    }
 
     static std::mt19937 &GetRandomEngine() {
         static thread_local std::mt19937 engine(std::random_device{}());

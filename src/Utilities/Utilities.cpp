@@ -1,6 +1,8 @@
 #include "Utilities.hpp"
 #include <fstream>
 #include <mutex>
+#include <shared_mutex>
+#include <unordered_map>
 
 static std::shared_mutex MtxJsonValidatorMap;
 static std::unordered_map<std::string, nlohmann::json_schema::json_validator> JsonValidatorMap;
