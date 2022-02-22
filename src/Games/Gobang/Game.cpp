@@ -21,10 +21,10 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
     bool win = false;
     for (unsigned char dire = 0; dire < 4; ++dire) {
         unsigned char count = 0;
-        for (auto x = row + DX[dire], y = col + DY[dire]; x < 15 && y < 15 && bitset[x * 15 + y];
+        for (auto x = row + DX[dire], y = col + DY[dire]; 0 < x && x < 15 && 0 < y && y < 15 && bitset[x * 15 + y];
              x += DX[dire], y += DY[dire])
             ++count;
-        for (auto x = row - DX[dire], y = col - DY[dire]; x < 15 && y < 15 && bitset[x * 15 + y];
+        for (auto x = row - DX[dire], y = col - DY[dire]; 0 < x && x < 15 && 0 < y && y < 15 && bitset[x * 15 + y];
              x -= DX[dire], y -= DY[dire])
             ++count;
         if (count >= 4) {

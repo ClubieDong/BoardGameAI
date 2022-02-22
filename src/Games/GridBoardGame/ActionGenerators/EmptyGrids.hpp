@@ -7,24 +7,22 @@
 namespace grid_board_game::action_generator {
 template <typename State, typename Action, typename Data>
 class EmptyGrids : public ::ActionGenerator::CRTP<Data> {
-private:
-    const State *m_State;
-
 public:
-    explicit EmptyGrids(const ::Game &, const ::State &state, const nlohmann::json &)
-        : m_State(static_cast<const State *>(&state)) {}
+    explicit EmptyGrids(const ::Game &, const nlohmann::json &) {}
 
-    virtual std::unique_ptr<::Action> FirstAction(const ::ActionGenerator::Data &data) const override {
+    virtual std::unique_ptr<::Action> FirstAction(const ::ActionGenerator::Data &data,
+                                                  const ::State &state) const override {
         auto action = std::make_unique<Action>(-1);
-        [[maybe_unused]] const auto isValid = NextAction(data, *action);
+        [[maybe_unused]] const auto isValid = NextAction(data, state, *action);
         assert(isValid);
         return action;
     }
-    virtual bool NextAction(const ::ActionGenerator::Data &, ::Action &action_) const override {
-        using BoardType = typename decltype(m_State->BitBoard)::value_type;
+    virtual bool NextAction(const ::ActionGenerator::Data &, const ::State &state_, ::Action &action_) const override {
+        const auto &state = static_cast<const State &>(state_);
         auto &action = static_cast<Action &>(action_);
+        using BoardType = typename decltype(state.BitBoard)::value_type;
         const auto emptyBits =
-            ~std::accumulate(m_State->BitBoard.cbegin(), m_State->BitBoard.cend(), BoardType(),
+            ~std::accumulate(state.BitBoard.cbegin(), state.BitBoard.cend(), BoardType(),
                              [](const BoardType &left, const BoardType &right) { return left | right; });
         while (true) {
             ++action.Position;

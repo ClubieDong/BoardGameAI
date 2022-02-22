@@ -1,0 +1,70 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "MCTS player",
+    "description": "Monte carlo tree search player schema",
+    "type": "object",
+    "properties": {
+        "iterations": {
+            "description": "The number of iterations",
+            "type": "integer",
+            "minimum": 1
+        },
+        "explorationFactor": {
+            "description": "The exploration factor in UCB formula",
+            "type": "number"
+        },
+        "goalMatrix": {
+            "description": "A 2D coefficient matrix representing each player's goal",
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "number"
+                },
+                "minItems": 1
+            },
+            "minItems": 1
+        },
+        "actionGenerator": {
+            "description": "Used to generate actions used in simulations",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "Action generator type",
+                    "$ref": "action_generators/types.schema.json"
+                },
+                "data": {
+                    "description": "Check the 'action_generators' folder for more information"
+                }
+            },
+            "required": [
+                "type",
+                "data"
+            ],
+            "additionalProperties": false
+        },
+        "rolloutPlayer": {
+            "description": "Rollout policy",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "Player type",
+                    "$ref": "players/types.schema.json"
+                },
+                "data": {
+                    "description": "Check the 'players' folder for more information"
+                }
+            },
+            "required": [
+                "type",
+                "data"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "actionGenerator",
+        "rolloutPlayer"
+    ],
+    "additionalProperties": false
+}

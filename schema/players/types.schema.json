@@ -4,6 +4,7 @@
     "description": "Player type",
     "type": "string",
     "enum": [
-        "random_move"
+        "random_move",
+        "mcts"
     ]
 }

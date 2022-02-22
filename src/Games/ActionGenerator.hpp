@@ -18,7 +18,7 @@ public:
     template <typename DerivedData>
     class CRTP;
 
-    static std::unique_ptr<ActionGenerator> Create(const std::string &type, const Game &game, const State &state,
+    static std::unique_ptr<ActionGenerator> Create(const std::string &type, const Game &game,
                                                    const nlohmann::json &data);
 
     virtual ~ActionGenerator() = default;
@@ -30,18 +30,21 @@ public:
 
     // This function should not return a null pointer,
     // because every valid state must have at least one action.
-    virtual std::unique_ptr<Action> FirstAction(const Data &data) const = 0;
-    virtual bool NextAction(const Data &data, Action &action) const = 0;
+    virtual std::unique_ptr<Action> FirstAction(const Data &data, const State &state) const = 0;
+    virtual bool NextAction(const Data &data, const State &state, Action &action) const = 0;
     virtual void Update(Data &, const Action &) const {}
 
+    // TODO: Rename to ForEachAction
     template <typename Func>
-    void ForEach(const Data &data, Func func) const {
-        auto action = FirstAction(data);
+    void ForEachAction(const Data &data, const State &state, Func func) const {
+        auto action = FirstAction(data, state);
         assert(action);
         do
             func(*action);
-        while (NextAction(data, *action));
+        while (NextAction(data, state, *action));
     }
+
+    std::unique_ptr<Action> GetNthAction(const Data &data, const State &state, unsigned int idx) const;
 };
 
 template <typename DerivedData>

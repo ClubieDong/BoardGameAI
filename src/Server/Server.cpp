@@ -95,8 +95,7 @@ nlohmann::json Server::AddPlayer(const nlohmann::json &data) {
 nlohmann::json Server::AddActionGenerator(const nlohmann::json &data) {
     unsigned int id;
     AccessState(data, [&](const GameRecord &gameRecord, StateRecord &stateRecord) {
-        auto actionGenerator =
-            ActionGenerator::Create(data["type"], *gameRecord.GamePtr, *stateRecord.StatePtr, data["data"]);
+        auto actionGenerator = ActionGenerator::Create(data["type"], *gameRecord.GamePtr, data["data"]);
         auto actionGeneratorData = actionGenerator->CreateData();
         id = stateRecord.SubActionGenerators.Emplace(std::move(actionGenerator), std::move(actionGeneratorData));
     });
@@ -136,7 +135,7 @@ nlohmann::json Server::GenerateActions(const nlohmann::json &data) {
         // Always lock state before locking player or action generator
         const std::shared_lock lockState(stateRecord.MtxState);
         const std::shared_lock lockActionGenerator(actionGeneratorRecord.MtxActionGeneratorData);
-        actionGenerator.ForEach(actionGeneratorData,
+        actionGenerator.ForEachAction(actionGeneratorData, *stateRecord.StatePtr,
                                 [&](const Action &action) { actions.push_back(game.GetJsonOfAction(action)); });
     });
     return {{"actions", actions}};
