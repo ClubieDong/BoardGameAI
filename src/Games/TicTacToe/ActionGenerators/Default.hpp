@@ -6,6 +6,7 @@
 namespace tic_tac_toe::action_generator {
 namespace data {
 struct Default : ::ActionGenerator::Data {
+    explicit Default(const ::State &) {}
     friend bool operator==(const Default &, const Default &) { return true; }
 };
 } // namespace data

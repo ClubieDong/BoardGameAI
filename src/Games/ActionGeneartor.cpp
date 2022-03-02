@@ -1,5 +1,6 @@
 #include "ActionGenerator.hpp"
 #include "Gobang/ActionGenerators/Default.hpp"
+#include "Gobang/ActionGenerators/Neighbor.hpp"
 #include "TicTacToe/ActionGenerators/Default.hpp"
 #include <unordered_map>
 
@@ -12,6 +13,7 @@ using ActionGeneartorCreatorFunc = std::unique_ptr<ActionGenerator> (*)(const Ga
 static const std::unordered_map<std::string, ActionGeneartorCreatorFunc> ActionGeneratorCreatorMap = {
     {"tic_tac_toe/default", CreateActionGenerator<tic_tac_toe::action_generator::Default>},
     {"gobang/default", CreateActionGenerator<gobang::action_generator::Default>},
+    {"gobang/neighbor", CreateActionGenerator<gobang::action_generator::Neighbor>},
 };
 
 std::unique_ptr<ActionGenerator> ActionGenerator::Create(const std::string &type, const Game &game,

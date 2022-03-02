@@ -13,7 +13,8 @@
         {
             "description": "Action generators of gobang",
             "enum": [
-                "default"
+                "default",
+                "neighbor"
             ]
         }
     ]

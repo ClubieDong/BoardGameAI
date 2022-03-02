@@ -24,13 +24,10 @@ public:
         const auto emptyBits =
             ~std::accumulate(state.BitBoard.cbegin(), state.BitBoard.cend(), BoardType(),
                              [](const BoardType &left, const BoardType &right) { return left | right; });
-        while (true) {
-            ++action.Position;
+        for (++action.Position; action.Position < emptyBits.size(); ++action.Position)
             if (emptyBits[action.Position])
                 return true;
-            if (action.Position >= emptyBits.size())
-                return false;
-        }
+        return false;
     }
 };
 } // namespace grid_board_game::action_generator

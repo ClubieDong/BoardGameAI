@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Gobang Neighbor ActionGenerator",
+    "description": "Gobang neighbor action generator schema",
+    "type": "object",
+    "properties": {
+        "range": {
+            "description": "Max distance to an existing piece for a valid action",
+            "type": "integer",
+            "minimum": 1
+        }
+    },
+    "required": [
+        "range"
+    ],
+    "additionalProperties": false
+}

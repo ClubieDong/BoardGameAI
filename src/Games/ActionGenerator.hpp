@@ -24,7 +24,7 @@ public:
     virtual ~ActionGenerator() = default;
     virtual std::string_view GetType() const = 0;
 
-    virtual std::unique_ptr<Data> CreateData() const = 0;
+    virtual std::unique_ptr<Data> CreateData(const State &state) const = 0;
     virtual std::unique_ptr<Data> CloneData(const Data &data) const = 0;
     virtual bool EqualData(const Data &left, const Data &right) const = 0;
 
@@ -34,7 +34,6 @@ public:
     virtual bool NextAction(const Data &data, const State &state, Action &action) const = 0;
     virtual void Update(Data &, const Action &) const {}
 
-    // TODO: Rename to ForEachAction
     template <typename Func>
     void ForEachAction(const Data &data, const State &state, Func func) const {
         auto action = FirstAction(data, state);
@@ -50,7 +49,9 @@ public:
 template <typename DerivedData>
 class ActionGenerator::CRTP : public ActionGenerator {
 public:
-    virtual std::unique_ptr<Data> CreateData() const override { return std::make_unique<DerivedData>(); }
+    virtual std::unique_ptr<Data> CreateData(const State &state) const override {
+        return std::make_unique<DerivedData>(state);
+    }
     virtual std::unique_ptr<Data> CloneData(const Data &data) const override {
         return std::make_unique<DerivedData>(static_cast<const DerivedData &>(data));
     }

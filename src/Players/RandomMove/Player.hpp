@@ -16,5 +16,6 @@ public:
 
     virtual std::string_view GetType() const override { return "random_move"; }
     virtual std::unique_ptr<Action> GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) override;
+    virtual void Update(const Action &action) override { m_ActionGenerator->Update(*m_ActionGeneratorData, action); }
 };
 } // namespace random_move

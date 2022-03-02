@@ -167,7 +167,7 @@ Player::Player(const Game &game, const State &state, const nlohmann::json &data)
     const auto &actionGeneratorJson = data["actionGenerator"];
     const auto &rolloutPlayerJson = data["rolloutPlayer"];
     m_ActionGenerator = ActionGenerator::Create(actionGeneratorJson["type"], game, actionGeneratorJson["data"]);
-    m_ActionGeneratorData = m_ActionGenerator->CreateData();
+    m_ActionGeneratorData = m_ActionGenerator->CreateData(state);
     m_Iterations = data["iterations"];
     m_ExplorationFactor = data["explorationFactor"];
     m_GoalMatrix = data["goalMatrix"];
