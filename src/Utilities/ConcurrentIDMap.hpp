@@ -1,10 +1,10 @@
 #pragma once
 
+#include "Parallel.hpp"
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -36,12 +36,8 @@ private:
 public:
     ~ConcurrentIDMap() {
         const std::scoped_lock lock(m_Mtx);
-        // Do not use tbb::parallel_for_each as destructors are most likely not CPU intensive
-        std::vector<std::thread> threads;
-        for (const auto &item : m_Map)
-            threads.emplace_back([&]() { item.second->Value.reset(); });
-        for (auto &thread : threads)
-            thread.join();
+        // Concurrently release all items
+        Parallel::ForEach(m_Map, [](const auto &item) { item.second->Value.reset(); });
     }
 
     template <typename... TArgs>
@@ -84,14 +80,6 @@ public:
     template <typename Func>
     void ForEachParallel(Func func) const {
         const std::shared_lock lock(m_Mtx);
-        // Do not use tbb::parallel_for_each as destructors are most likely not CPU intensive
-        std::vector<std::thread> threads;
-        for (const auto &item : m_Map)
-            threads.emplace_back([&]() {
-                // No element-wise lock is needed here, because we've already got the reader lock of the entire map
-                func(*item.second->Value);
-            });
-        for (auto &thread : threads)
-            thread.join();
+        Parallel::ForEach(m_Map, [&](const auto &item) { func(*item.second->Value); });
     }
 };

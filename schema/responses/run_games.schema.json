@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "RunGames Response",
+    "type": "object",
+    "properties": {
+        "results": {
+            "description": "List of results for each round",
+            "type": "array",
+            "items": {
+                "description": "Points earned by each player this round",
+                "type": "array",
+                "items": {
+                    "type": "number"
+                },
+                "minItems": 1
+            },
+            "minItems": 1
+        },
+        "finalResult": {
+            "description": "Total points earned by each player",
+            "type": "array",
+            "items": {
+                "type": "number"
+            },
+            "minItems": 1
+        }
+    },
+    "required": [
+        "results",
+        "finalResult"
+    ],
+    "additionalProperties": false
+}

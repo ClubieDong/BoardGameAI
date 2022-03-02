@@ -49,3 +49,8 @@ target_link_libraries(${TEST_PROJECT_NAME} PRIVATE nlohmann_json_schema_validato
 find_package(gcem CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE gcem)
 target_link_libraries(${TEST_PROJECT_NAME} PRIVATE gcem)
+
+# Intel's TBB
+find_package(TBB CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
+target_link_libraries(${TEST_PROJECT_NAME} PRIVATE gcem)

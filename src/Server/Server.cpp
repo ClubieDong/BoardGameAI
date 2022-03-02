@@ -1,9 +1,12 @@
 #include "Server.hpp"
+#include "../Utilities/Parallel.hpp"
 #include "../Utilities/Utilities.hpp"
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
+#include <tbb/parallel_for_each.h>
 #include <thread>
 #include <vector>
 
@@ -23,6 +26,7 @@ static const std::unordered_map<std::string, nlohmann::json (Server::*)(const nl
     {"stop_thinking", &Server::StopThinking},
     {"get_best_action", &Server::GetBestAction},
     {"query_details", &Server::QueryDetails},
+    {"run_games", &Server::RunGames},
 };
 
 void Server::Run() {
@@ -160,23 +164,22 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
             response["result"] = std::move(*result);
         else
             response["nextPlayer"] = game.GetNextPlayer(state);
-        // Concurrently update players and action generators,
-        // do not use tbb::parallel_invoke as those functions are most likely not CPU intensive
-        std::thread threadUpdatePlayers([&]() {
+        // Concurrently update players and action generators
+        auto futureUpdatePlayers = Parallel::Async([&]() {
             stateRecord.SubPlayers.ForEachParallel([&](const PlayerRecord &playerRecord) {
                 const std::scoped_lock lock(playerRecord.MtxPlayer);
                 playerRecord.PlayerPtr->Update(*action);
             });
         });
-        std::thread threadUpdateActionGenerators([&]() {
+        auto futureUpdateActionGenerators = Parallel::Async([&]() {
             stateRecord.SubActionGenerators.ForEachParallel([&](const ActionGeneratorRecord &actionGeneratorRecord) {
                 const std::scoped_lock lock(actionGeneratorRecord.MtxActionGeneratorData);
                 actionGeneratorRecord.ActionGeneratorPtr->Update(*actionGeneratorRecord.ActionGeneratorDataPtr,
                                                                  *action);
             });
         });
-        threadUpdatePlayers.join();
-        threadUpdateActionGenerators.join();
+        futureUpdatePlayers.get();
+        futureUpdateActionGenerators.get();
     });
     return response;
 }
@@ -224,4 +227,60 @@ nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
 nlohmann::json Server::QueryDetails(const nlohmann::json &) {
     // TODO
     return {};
+}
+
+nlohmann::json Server::RunGames(const nlohmann::json &data) {
+    const unsigned int rounds = data["rounds"];
+    const auto playerCount = data["players"].size();
+    const auto game = Game::Create(data["game"]["type"], data["game"]["data"]);
+    const auto runGame = [&](auto &result) {
+        const auto state = game->CreateDefaultState();
+        // player, maxThinkTime, allowBackgroundThinking
+        std::vector<std::tuple<std::unique_ptr<Player>, std::optional<std::chrono::duration<double>>, bool>> players;
+        // Create players
+        for (const auto &playerData : data["players"]) {
+            auto player = Player::Create(playerData["type"], *game, *state, playerData["data"]);
+            std::optional<std::chrono::duration<double>> maxThinkTime;
+            if (data.contains("maxThinkTime"))
+                maxThinkTime = std::chrono::duration<double>(playerData["maxThinkTime"]);
+            const bool allowBackgroundThinking = playerData["allowBackgroundThinking"];
+            players.emplace_back(std::move(player), maxThinkTime, allowBackgroundThinking);
+        }
+        // Start thinking
+        for (const auto &[player, maxThinkTime, allowBackgroundThinking] : players)
+            if (allowBackgroundThinking)
+                player->StartThinking();
+        // Play the game
+        while (true) {
+            const auto &[player, maxThinkTime, allowBackgroundThinking] = players[game->GetNextPlayer(*state)];
+            if (!allowBackgroundThinking)
+                player->StartThinking();
+            const auto action = player->GetBestAction(maxThinkTime);
+            if (!allowBackgroundThinking)
+                player->StopThinking();
+            auto actionResult = game->TakeAction(*state, *action);
+            if (actionResult) {
+                result = std::move(*actionResult);
+                break;
+            }
+            for (const auto &[player, maxThinkTime, allowBackgroundThinking] : players)
+                player->Update(*action);
+        }
+        // Stop thinking
+        for (const auto &[player, maxThinkTime, allowBackgroundThinking] : players)
+            if (allowBackgroundThinking)
+                player->StopThinking();
+    };
+    std::vector<std::vector<double>> results(rounds);
+    if (data["parallel"])
+        tbb::parallel_for_each(results, runGame);
+    else
+        std::for_each(results.begin(), results.end(), runGame);
+    std::vector<double> finalResult(playerCount, 0.0);
+    for (const auto &result : results) {
+        assert(result.size() == playerCount);
+        for (unsigned int idx = 0; idx < playerCount; ++idx)
+            finalResult[idx] += result[idx];
+    }
+    return {{"results", results}, {"finalResult", finalResult}};
 }

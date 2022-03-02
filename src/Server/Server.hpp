@@ -121,4 +121,5 @@ public:
     nlohmann::json StopThinking(const nlohmann::json &data);
     nlohmann::json GetBestAction(const nlohmann::json &data);
     nlohmann::json QueryDetails(const nlohmann::json &data);
+    nlohmann::json RunGames(const nlohmann::json &data);
 };

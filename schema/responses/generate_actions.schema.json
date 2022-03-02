@@ -6,7 +6,7 @@
         "actions": {
             "description": "List of all valid actions",
             "type": "array",
-            "item": {
+            "items": {
                 "description": "Check the 'actions' folder for more information"
             },
             "minItems": 1

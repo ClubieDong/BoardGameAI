@@ -1,0 +1,74 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "RunGames Request",
+    "description": "Let players play a game for several times and see the results",
+    "type": "object",
+    "properties": {
+        "rounds": {
+            "description": "The number of rounds",
+            "type": "integer",
+            "minimum": 1
+        },
+        "parallel": {
+            "description": "Whether to run games in parallel",
+            "type": "boolean"
+        },
+        "game": {
+            "description": "The game to play",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "Game type",
+                    "$ref": "games/types.schema.json"
+                },
+                "data": {
+                    "description": "Check the 'games' folder for more information"
+                }
+            },
+            "required": [
+                "type",
+                "data"
+            ],
+            "additionalProperties": false
+        },
+        "players": {
+            "description": "Game players",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "description": "Player type",
+                        "$ref": "players/types.schema.json"
+                    },
+                    "data": {
+                        "description": "Check the 'players' folder for more information"
+                    },
+                    "maxThinkTime": {
+                        "description": "The maximum time the player is allowed to think, in seconds. Only works for players with the ability to control think time. If not specified, return as soon as possible",
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "allowBackgroundThinking": {
+                        "description": "Whether to allow players to think during other players' turns",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "type",
+                    "data",
+                    "allowBackgroundThinking"
+                ],
+                "additionalProperties": false
+            },
+            "minItems": 1
+        }
+    },
+    "required": [
+        "rounds",
+        "parallel",
+        "game",
+        "players"
+    ],
+    "additionalProperties": false
+}

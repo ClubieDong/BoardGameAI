@@ -25,7 +25,8 @@
                 "start_thinking",
                 "stop_thinking",
                 "get_best_action",
-                "query_details"
+                "query_details",
+                "run_games"
             ]
         },
         "data": {
