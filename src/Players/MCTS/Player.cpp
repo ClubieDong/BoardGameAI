@@ -170,7 +170,7 @@ Player::Player(const Game &game, const State &state, const nlohmann::json &data)
     m_ActionGeneratorData = m_ActionGenerator->CreateData(state);
     m_Iterations = data["iterations"];
     m_ExplorationFactor = data["explorationFactor"];
-    m_GoalMatrix = data["goalMatrix"];
+    m_GoalMatrix = data["goalMatrix"].get<std::vector<std::vector<double>>>();
     m_RolloutPolicyType = rolloutPlayerJson["type"];
     m_RolloutPolicyData = rolloutPlayerJson["data"];
 }

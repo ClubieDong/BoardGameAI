@@ -9,8 +9,14 @@
 #include <string_view>
 #include <vector>
 
-struct State {};
-struct Action {};
+struct State {
+    // TODO: Remove vtable if possible
+    virtual ~State() = default;
+};
+struct Action {
+    // TODO: Remove vtable if possible
+    virtual ~Action() = default;
+};
 
 class Game : public NonCopyableNonMoveable {
 public:

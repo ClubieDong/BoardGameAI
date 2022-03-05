@@ -13,7 +13,10 @@ struct Action;
 
 class ActionGenerator : public NonCopyableNonMoveable {
 public:
-    struct Data {};
+    struct Data {
+        // TODO: Remove vtable if possible
+        virtual ~Data() = default;
+    };
 
     template <typename DerivedData>
     class CRTP;
