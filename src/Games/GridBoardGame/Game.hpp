@@ -10,7 +10,7 @@
 namespace grid_board_game {
 template <unsigned char RowCount, unsigned char ColCount, unsigned char PlayerCount>
 struct State : public ::State {
-    using PosType = Util::UIntBySize<RowCount * ColCount>;
+    using PosType = Util::UIntByValue<RowCount * ColCount>;
 
     // TODO: Is it better to use bit operations instead of move count?
     //       e.g. `MoveCount == RowCount * ColCount` vs `(BitBoard[0] | BitBoard[1]).all()`
@@ -62,7 +62,7 @@ struct State : public ::State {
 template <unsigned char RowCount, unsigned char ColCount>
 struct Action : public ::Action {
 public:
-    using PosType = Util::UIntBySize<RowCount * ColCount>;
+    using PosType = Util::UIntByValue<RowCount * ColCount>;
     PosType Position;
 
     explicit Action(PosType position) : Position(position) {}

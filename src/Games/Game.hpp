@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Utilities/Helpers.hpp"
 #include "../Utilities/Utilities.hpp"
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -18,7 +17,7 @@ struct Action {
     virtual ~Action() = default;
 };
 
-class Game : public NonCopyableNonMoveable {
+class Game : public Util::NonCopyableNonMoveable {
 public:
     template <typename DerivedState, typename DerivedAction>
     class CRTP;

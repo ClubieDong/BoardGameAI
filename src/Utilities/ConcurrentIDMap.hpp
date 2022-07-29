@@ -30,7 +30,7 @@ private:
 
     // Used to lock the map and count
     mutable std::shared_mutex m_Mtx;
-    unsigned int m_Count = 0;
+    unsigned int m_NextID = 1;
     std::unordered_map<unsigned int, std::unique_ptr<Record>> m_Map;
 
 public:
@@ -46,7 +46,7 @@ public:
         auto record = std::make_unique<Record>(std::forward<TArgs>(args)...);
         {
             const std::scoped_lock lock(m_Mtx);
-            const auto id = ++m_Count;
+            const auto id = m_NextID++;
             m_Map.try_emplace(id, std::move(record));
             return id;
         }

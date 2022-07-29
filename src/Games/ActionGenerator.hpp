@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Utilities/Helpers.hpp"
+#include "../Utilities/Utilities.hpp"
 #include <cassert>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -11,7 +11,7 @@ class Game;
 struct State;
 struct Action;
 
-class ActionGenerator : public NonCopyableNonMoveable {
+class ActionGenerator : public Util::NonCopyableNonMoveable {
 public:
     struct Data {
         // TODO: Remove vtable if possible

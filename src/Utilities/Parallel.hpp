@@ -7,13 +7,9 @@
 
 class Parallel {
 public:
-    // This function works the same as std::async, but is guaranteed not to use a thread pool
     template <typename Func>
     [[nodiscard]] static std::future<std::invoke_result_t<Func>> Async(Func func) {
-        std::packaged_task<std::invoke_result_t<Func>()> task(func);
-        auto future = task.get_future();
-        std::thread(std::move(task)).detach();
-        return future;
+        return std::async(std::launch::async, func);
     }
 
     // This function works the same as the parallel version of std::for_each, but is guaranteed not to use a thread pool

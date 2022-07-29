@@ -19,11 +19,11 @@ private:
     //     [NormalNode(unexpanded)]       [TerminalNode]
     //       Children.size() == 0
     //                | expand
-    //                V
+    //                v
     // [NormalNode(partially expanded)]
     //        NewChildCount > 0
-    //                | all children take action
-    //                V
+    //                | all children have taken actions
+    //                v
     //   [NormalNode(fully expanded)]
     //        NewChildCount == 0
     struct Node;
@@ -32,13 +32,13 @@ private:
         explicit NewNode(std::unique_ptr<struct Action> &&action) : Action(std::move(action)) {}
     };
     struct TerminalNode {
-        double Score = 0;
+        double Score = 0.0;
         std::uint32_t Count = 0;
         std::vector<double> Result;
         explicit TerminalNode(std::vector<double> &&result) : Result(std::move(result)) {}
     };
     struct NormalNode {
-        double Score = 0;
+        double Score = 0.0;
         std::uint32_t Count = 0, NewChildCount = 0;
         std::vector<Node> Children;
         std::unique_ptr<struct State> State;

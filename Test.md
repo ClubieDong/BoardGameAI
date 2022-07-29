@@ -67,12 +67,12 @@
 {"type":"start_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
 ```
 
-## stop_thinking
-```json
-{"type":"stop_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
-```
-
 ## get_best_action
 ```json
 {"type":"get_best_action","data":{"gameID":1,"stateID":1,"playerID":1,"maxThinkTime":1.5}}
+```
+
+## stop_thinking
+```json
+{"type":"stop_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
 ```
