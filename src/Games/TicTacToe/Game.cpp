@@ -2,7 +2,7 @@
 #include <cassert>
 
 namespace tic_tac_toe {
-std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Action &action_) const {
+std::optional<std::vector<float>> Game::TakeAction(::State &state_, const ::Action &action_) const {
     auto &state = static_cast<State &>(state_);
     const auto &action = static_cast<const Action &>(action_);
     assert(IsValidAction(state, action));
@@ -21,12 +21,12 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
                      (bitset[0] & bitset[4] & bitset[8]) | // Main diagonal
                      (bitset[2] & bitset[4] & bitset[6]);  // Counter diagonal
 
-    std::optional<std::vector<double>> res;
+    std::optional<std::vector<float>> res;
     if (win) {
-        res.emplace(2, 0.0);
-        (*res)[nextPlayer] = 1.0;
+        res.emplace(2, 0.0f);
+        (*res)[nextPlayer] = 1.0f;
     } else if (state.MoveCount == 9) // Draw
-        res.emplace(2, 0.5);
+        res.emplace(2, 0.5f);
     return res;
 }
 } // namespace tic_tac_toe

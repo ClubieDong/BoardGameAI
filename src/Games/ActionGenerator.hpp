@@ -14,7 +14,6 @@ struct Action;
 class ActionGenerator : public Util::NonCopyableNonMoveable {
 public:
     struct Data {
-        // TODO: Remove vtable if possible
         virtual ~Data() = default;
     };
 

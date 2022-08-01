@@ -15,6 +15,6 @@ class Game : public grid_board_game::Game<State, Action> {
 public:
     explicit Game(const nlohmann::json &) {}
     virtual std::string_view GetType() const override { return "tic_tac_toe"; }
-    virtual std::optional<std::vector<double>> TakeAction(::State &state, const ::Action &action) const override;
+    virtual std::optional<std::vector<float>> TakeAction(::State &state, const ::Action &action) const override;
 };
 } // namespace tic_tac_toe

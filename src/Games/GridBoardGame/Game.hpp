@@ -15,7 +15,7 @@ struct State : public ::State {
     // TODO: Is it better to use bit operations instead of move count?
     //       e.g. `MoveCount == RowCount * ColCount` vs `(BitBoard[0] | BitBoard[1]).all()`
     // Since alignof(State) is 8 most of the time, using a smaller integer type will not save memory
-    std::uint64_t MoveCount = 0;
+    uint64_t MoveCount = 0;
     std::array<std::bitset<RowCount * ColCount>, PlayerCount> BitBoard = {};
 
     State() = default;

@@ -9,11 +9,10 @@
 #include <vector>
 
 struct State {
-    // TODO: Remove vtable if possible
     virtual ~State() = default;
 };
+
 struct Action {
-    // TODO: Remove vtable if possible
     virtual ~Action() = default;
 };
 
@@ -40,7 +39,7 @@ public:
     virtual unsigned char GetNextPlayer(const State &state) const = 0;
     virtual bool IsValidAction(const State &state, const Action &action) const = 0;
     // TODO: Small vector optimization
-    virtual std::optional<std::vector<double>> TakeAction(State &state, const Action &action) const = 0;
+    virtual std::optional<std::vector<float>> TakeAction(State &state, const Action &action) const = 0;
 };
 
 template <typename DerivedState, typename DerivedAction>

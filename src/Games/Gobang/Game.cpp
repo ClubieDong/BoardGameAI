@@ -6,7 +6,7 @@ static constexpr std::array<signed char, 4> DX = {0, 1, 1, 1};
 static constexpr std::array<signed char, 4> DY = {1, 0, 1, -1};
 
 namespace gobang {
-std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Action &action_) const {
+std::optional<std::vector<float>> Game::TakeAction(::State &state_, const ::Action &action_) const {
     // TODO: Maybe optimize using bit operations?
     auto &state = static_cast<State &>(state_);
     const auto &action = static_cast<const Action &>(action_);
@@ -33,12 +33,12 @@ std::optional<std::vector<double>> Game::TakeAction(::State &state_, const ::Act
         }
     }
 
-    std::optional<std::vector<double>> res;
+    std::optional<std::vector<float>> res;
     if (win) {
-        res.emplace(2, 0.0);
-        (*res)[nextPlayer] = 1.0;
+        res.emplace(2, 0.0f);
+        (*res)[nextPlayer] = 1.0f;
     } else if (state.MoveCount == 15 * 15) // Draw
-        res.emplace(2, 0.5);
+        res.emplace(2, 0.5f);
     return res;
 }
 } // namespace gobang

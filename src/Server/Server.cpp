@@ -233,7 +233,7 @@ nlohmann::json Server::RunGames(const nlohmann::json &data) {
     const unsigned int rounds = data["rounds"];
     const auto playerCount = data["players"].size();
     const auto game = Game::Create(data["game"]["type"], data["game"]["data"]);
-    const auto runGame = [&](auto &result) {
+    const auto runGame = [&](std::vector<float> &result) {
         const auto state = game->CreateDefaultState();
         // player, maxThinkTime, allowBackgroundThinking
         std::vector<std::tuple<std::unique_ptr<Player>, std::optional<std::chrono::duration<double>>, bool>> players;
@@ -271,12 +271,12 @@ nlohmann::json Server::RunGames(const nlohmann::json &data) {
             if (allowBackgroundThinking)
                 player->StopThinking();
     };
-    std::vector<std::vector<double>> results(rounds);
+    std::vector<std::vector<float>> results(rounds);
     if (data["parallel"])
         tbb::parallel_for_each(results, runGame);
     else
         std::for_each(results.begin(), results.end(), runGame);
-    std::vector<double> finalResult(playerCount, 0.0);
+    std::vector<float> finalResult(playerCount, 0.0f);
     for (const auto &result : results) {
         assert(result.size() == playerCount);
         for (unsigned int idx = 0; idx < playerCount; ++idx)
