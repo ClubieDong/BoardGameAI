@@ -9,8 +9,7 @@
 #include <utility>
 #include <vector>
 
-// Hash map with auto-incrementing ID as keys,
-// supporting thread-safe insertion, erasure, access, and parallel traversal
+// Hash map with auto-incrementing ID as keys, supporting thread-safe insertion, erasure, access, and parallel traversal
 template <typename T>
 class ConcurrentIDMap {
 private:

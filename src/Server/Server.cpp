@@ -165,13 +165,13 @@ nlohmann::json Server::TakeAction(const nlohmann::json &data) {
         else
             response["nextPlayer"] = game.GetNextPlayer(state);
         // Concurrently update players and action generators
-        auto futureUpdatePlayers = Parallel::Async([&]() {
+        auto futureUpdatePlayers = Parallel::Async([&] {
             stateRecord.SubPlayers.ForEachParallel([&](const PlayerRecord &playerRecord) {
                 const std::scoped_lock lock(playerRecord.MtxPlayer);
                 playerRecord.PlayerPtr->Update(*action);
             });
         });
-        auto futureUpdateActionGenerators = Parallel::Async([&]() {
+        auto futureUpdateActionGenerators = Parallel::Async([&] {
             stateRecord.SubActionGenerators.ForEachParallel([&](const ActionGeneratorRecord &actionGeneratorRecord) {
                 const std::scoped_lock lock(actionGeneratorRecord.MtxActionGeneratorData);
                 actionGeneratorRecord.ActionGeneratorPtr->Update(*actionGeneratorRecord.ActionGeneratorDataPtr,
@@ -241,7 +241,7 @@ nlohmann::json Server::RunGames(const nlohmann::json &data) {
         for (const auto &playerData : data["players"]) {
             auto player = Player::Create(playerData["type"], *game, *state, playerData["data"]);
             std::optional<std::chrono::duration<double>> maxThinkTime;
-            if (data.contains("maxThinkTime"))
+            if (playerData.contains("maxThinkTime"))
                 maxThinkTime = std::chrono::duration<double>(playerData["maxThinkTime"]);
             const bool allowBackgroundThinking = playerData["allowBackgroundThinking"];
             players.emplace_back(std::move(player), maxThinkTime, allowBackgroundThinking);

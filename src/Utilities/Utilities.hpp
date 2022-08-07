@@ -39,8 +39,8 @@ public:
     static const nlohmann::json_schema::json_validator &GetJsonValidator(const std::string &path);
 
     static std::minstd_rand &GetRandomEngine() {
-        // The performance of the random engine has a great influence on the efficiency of the MCTS algorithm,
-        // I have tested all the random engines provided by the standard library, and `minstd_rand` is the fastest
+        // The performance of the random engine has a great influence on the efficiency of the MCTS algorithm, I have
+        // tested all the random engines provided by the standard library, and `minstd_rand` is the fastest
         static thread_local std::minstd_rand engine(std::random_device{}());
         return engine;
     }

@@ -24,6 +24,14 @@ std::unique_ptr<ActionGenerator> ActionGenerator::Create(const std::string &type
     return creator(game, data);
 }
 
+std::vector<std::unique_ptr<Action>> ActionGenerator::GetActionList(const Data &data, const State &state,
+                                                                    const Game &game) const {
+    std::vector<std::unique_ptr<Action>> actionList;
+    ForEachAction(data, state, [&](const Action &action) { actionList.push_back(game.CloneAction(action)); });
+    assert(actionList.size() > 0);
+    return actionList;
+}
+
 std::unique_ptr<Action> ActionGenerator::GetNthAction(const Data &data, const State &state, unsigned int idx) const {
     auto action = FirstAction(data, state);
     assert(action);

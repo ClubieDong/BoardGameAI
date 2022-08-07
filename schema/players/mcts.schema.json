@@ -4,11 +4,6 @@
     "description": "Monte carlo tree search player schema",
     "type": "object",
     "properties": {
-        "iterations": {
-            "description": "The number of iterations",
-            "type": "integer",
-            "minimum": 1
-        },
         "explorationFactor": {
             "description": "The exploration factor in UCB formula",
             "type": "number"
@@ -60,11 +55,59 @@
                 "data"
             ],
             "additionalProperties": false
+        },
+        "parallel": {
+            "description": "If false, the MCTS algorithm ignores `StartThinking` and `StopThinking` requests, and runs the specified number of iterations during `GetBestAction` requests without parallelization",
+            "type": "boolean"
         }
     },
-    "required": [
-        "actionGenerator",
-        "rolloutPlayer"
+    "oneOf": [
+        {
+            "properties": {
+                "explorationFactor": {},
+                "goalMatrix": {},
+                "actionGenerator": {},
+                "rolloutPlayer": {},
+                "parallel": {
+                    "const": true
+                },
+                "workers": {
+                    "description": "The number of parallel workers. If zero, hardware concurrency is used",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            },
+            "required": [
+                "workers"
+            ],
+            "additionalProperties": false
+        },
+        {
+            "properties": {
+                "explorationFactor": {},
+                "goalMatrix": {},
+                "actionGenerator": {},
+                "rolloutPlayer": {},
+                "parallel": {
+                    "const": false
+                },
+                "iterations": {
+                    "description": "The number of iterations",
+                    "type": "integer",
+                    "minimum": 1
+                }
+            },
+            "required": [
+                "iterations"
+            ],
+            "additionalProperties": false
+        }
     ],
-    "additionalProperties": false
+    "required": [
+        "explorationFactor",
+        "goalMatrix",
+        "actionGenerator",
+        "rolloutPlayer",
+        "parallel"
+    ]
 }

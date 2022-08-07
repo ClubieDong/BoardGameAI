@@ -30,11 +30,16 @@ public:
     virtual std::unique_ptr<Data> CloneData(const Data &data) const = 0;
     virtual bool EqualData(const Data &left, const Data &right) const = 0;
 
-    // This function should not return a null pointer,
-    // because every valid state must have at least one action.
+    // This method should not return a null pointer, because every valid state must have at least one action
     virtual std::unique_ptr<Action> FirstAction(const Data &data, const State &state) const = 0;
     virtual bool NextAction(const Data &data, const State &state, Action &action) const = 0;
     virtual void Update(Data &, const Action &) const {}
+
+    // The base class provides default implementations of the following methods by using `FirstAction` and `NextAction`,
+    // better implementations can be overridden by subclasses
+    virtual std::vector<std::unique_ptr<Action>> GetActionList(const Data &data, const State &state,
+                                                               const Game &game) const;
+    virtual std::unique_ptr<Action> GetNthAction(const Data &data, const State &state, unsigned int idx) const;
 
     template <typename Func>
     void ForEachAction(const Data &data, const State &state, Func func) const {
@@ -44,8 +49,6 @@ public:
             func(*action);
         while (NextAction(data, state, *action));
     }
-
-    std::unique_ptr<Action> GetNthAction(const Data &data, const State &state, unsigned int idx) const;
 };
 
 template <typename DerivedData>

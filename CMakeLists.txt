@@ -68,7 +68,7 @@ target_compile_options(${PROJECT_NAME}Benchmark PRIVATE ${WARNING_OPTIONS} ${PRO
 target_link_options(${PROJECT_NAME}Benchmark PRIVATE ${PROFILE_OPTIONS})
 target_link_libraries(${PROJECT_NAME}Benchmark PRIVATE ${THRID_PARTY_LIBRARIES} ${THRID_PARTY_LIBRARIES_FOR_BENCHMARK})
 
-# ========== Copy schema ==========
+# ========== Copy files ==========
 # schema
 add_custom_command(
     TARGET ${PROJECT_NAME} ${PROJECT_NAME}Test ${PROJECT_NAME}Benchmark

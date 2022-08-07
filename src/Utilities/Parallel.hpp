@@ -17,7 +17,7 @@ public:
     static void ForEach(const TContainer &container, Func func) {
         std::vector<std::future<void>> futures;
         for (auto &item : container)
-            futures.push_back(Async([&]() { func(item); }));
+            futures.push_back(Async([&] { func(item); }));
         for (auto &future : futures)
             future.get();
     }
