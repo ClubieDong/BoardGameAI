@@ -97,9 +97,6 @@ struct Player::UnexpandedNode : public Node {
     std::unique_ptr<struct State> State;
     std::unique_ptr<ActionGenerator::Data> ActionGeneratorData;
 
-    explicit UnexpandedNode(std::unique_ptr<struct State> &&state,
-                            std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData)
-        : Node(0, 0.0f), State(std::move(state)), ActionGeneratorData(std::move(actionGeneratorData)) {}
     explicit UnexpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<struct State> &&state,
                             std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData)
         : Node(score, rolloutCount), State(std::move(state)), ActionGeneratorData(std::move(actionGeneratorData)) {}
@@ -117,6 +114,11 @@ struct Player::PartiallyExpandedNode : public ExpandedNode {
     std::unique_ptr<ActionGenerator::Data> ActionGeneratorData;
     std::unique_ptr<Action> NextAction;
 
+    explicit PartiallyExpandedNode(std::unique_ptr<struct State> &&state,
+                                   std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData,
+                                   std::unique_ptr<Action> &&nextAction)
+        : ExpandedNode(0.0f, 0, {}), State(std::move(state)), ActionGeneratorData(std::move(actionGeneratorData)),
+          NextAction(std::move(nextAction)) {}
     explicit PartiallyExpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<struct State> &&state,
                                    std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData,
                                    std::unique_ptr<Action> &&nextAction)
@@ -132,17 +134,20 @@ struct Player::FullyExpandedNode : public ExpandedNode {
         : ExpandedNode(score, rolloutCount, std::move(children)), NextPlayer(nextPlayer) {}
 };
 
-enum class Player::Signal { StartThinking, StopThinking, ReportVotes, Prune, Exit };
+enum class Player::Signal { StartThinking, StopThinking, GetBestAction, QueryDetails, Prune, Exit };
 
 struct Player::ThreadData {
     std::thread Thread;
-    std::vector<unsigned int> ActionVotes;
     // From main thread to worker thread
     std::promise<Signal> PromiseSignal;
     std::future<Signal> FutureSignal;
     // From worker thread to main thread
     std::promise<void> PromiseDone;
     std::future<void> FutureDone;
+    // Information reported by the worker thread
+    std::vector<unsigned int> ActionRolloutCount;
+    std::vector<float> ActionScore;
+    unsigned int TotalRolloutCount;
 
     ThreadData() : FutureSignal(PromiseSignal.get_future()), FutureDone(PromiseDone.get_future()) {}
 };
@@ -176,7 +181,7 @@ std::unique_ptr<Player::Node> &Player::Select(std::unique_ptr<Node> &root, std::
 
 Player::Node &Player::Expand(std::unique_ptr<Player::Node> &node, std::stack<ExpandedNode *> &path) const {
     assert(node && typeid(*node) != typeid(FullyExpandedNode) && typeid(*node) != typeid(NewNode));
-    if (typeid(*node) == typeid(TerminalNode) || node->RolloutCount == 0)
+    if (typeid(*node) == typeid(TerminalNode))
         return *node;
     if (typeid(*node) == typeid(UnexpandedNode)) {
         // Move state and action generator data from `UnexpandedNode` to the new `PartiallyExpandedNode`
@@ -266,7 +271,7 @@ void Player::BackPropagate(Node *node, std::stack<ExpandedNode *> &path, const s
     std::vector<float> score;
     score.reserve(m_GoalMatrix.size());
     for (const auto &coef : m_GoalMatrix)
-        score.push_back(std::inner_product(result.cbegin(), result.cend(), coef.cbegin(), 0));
+        score.push_back(std::inner_product(result.cbegin(), result.cend(), coef.cbegin(), 0.0f));
     // Update each node on the path
     while (!path.empty()) {
         // Get the next player
@@ -291,8 +296,11 @@ void Player::BackPropagate(Node *node, std::stack<ExpandedNode *> &path, const s
 }
 
 std::unique_ptr<Player::Node> Player::CreateRootNode() const {
-    return std::make_unique<UnexpandedNode>(m_Game->CloneState(*m_State),
-                                            m_ActionGenerator->CloneData(*m_ActionGeneratorData));
+    auto state = m_Game->CloneState(*m_State);
+    auto actionGeneratorData = m_ActionGenerator->CloneData(*m_ActionGeneratorData);
+    auto nextAction = m_ActionGenerator->FirstAction(*actionGeneratorData, *state);
+    return std::make_unique<PartiallyExpandedNode>(std::move(state), std::move(actionGeneratorData),
+                                                   std::move(nextAction));
 }
 
 void Player::RunSingleIteration(std::unique_ptr<Node> &root, std::stack<ExpandedNode *> &path) const {
@@ -305,7 +313,7 @@ void Player::RunSingleIteration(std::unique_ptr<Node> &root, std::stack<Expanded
 std::unique_ptr<Action> Player::ChooseBestActionSequential(const Node &root) const {
     if (typeid(root) != typeid(FullyExpandedNode))
         // If the root node is not `FullyExpandedNode`, not all actions are evaluated, so we return the first action as
-        // a fallback strategy, the same for `ReportVotes` and `Prune` below
+        // a fallback strategy, the same for `ReportData` and `Prune` below
         // TODO: Need a warning message
         return m_ActionGenerator->FirstAction(*m_ActionGeneratorData, *m_State);
     const auto &fullExpNode = static_cast<const FullyExpandedNode &>(root);
@@ -322,15 +330,27 @@ std::unique_ptr<Action> Player::ChooseBestActionSequential(const Node &root) con
     return m_ActionGenerator->GetNthAction(*m_ActionGeneratorData, *m_State, maxIdx);
 }
 
-void Player::ReportVotes(ThreadData &data, const Node &root) const {
+void Player::ReportData(ThreadData &data, const Node &root, bool includeScore) const {
     if (typeid(root) != typeid(FullyExpandedNode)) {
-        data.ActionVotes.clear();
+        data.ActionRolloutCount.clear();
+        if (includeScore) {
+            data.ActionScore.clear();
+            data.TotalRolloutCount = 0;
+        }
         return;
     }
+    // Action rollout count
     const auto &fullExpNode = static_cast<const FullyExpandedNode &>(root);
-    data.ActionVotes.resize(fullExpNode.Children.size());
+    data.ActionRolloutCount.resize(fullExpNode.Children.size());
     for (unsigned int idx = 0; idx < fullExpNode.Children.size(); ++idx)
-        data.ActionVotes[idx] = fullExpNode.Children[idx]->RolloutCount;
+        data.ActionRolloutCount[idx] = fullExpNode.Children[idx]->RolloutCount;
+    // Action score and total rollout count
+    if (includeScore) {
+        data.ActionScore.resize(fullExpNode.Children.size());
+        for (unsigned int idx = 0; idx < fullExpNode.Children.size(); ++idx)
+            data.ActionScore[idx] = fullExpNode.Children[idx]->Score;
+        data.TotalRolloutCount = root.RolloutCount;
+    }
 }
 
 void Player::Prune(std::unique_ptr<Node> &root) const {
@@ -349,16 +369,16 @@ void Player::Prune(std::unique_ptr<Node> &root) const {
 }
 
 std::unique_ptr<Action> Player::ChooseBestActionParallel() const {
-    SendSignal(Signal::ReportVotes);
-    // Calculate the action with the most votes
+    SendSignal(Signal::GetBestAction);
+    // Calculate the action with the most visit count
     unsigned int maxIdx = 0, maxCount = 0;
     for (unsigned int idx = 0; idx < m_ActionList.size(); ++idx) {
-        // Count the votes of all threads for the action
+        // Count the visit count of all threads for the action
         unsigned int count = 0;
         for (const auto &data : m_ThreadList)
-            if (data->ActionVotes.size() > 0) {
-                assert(data->ActionVotes.size() == m_ActionList.size());
-                count += data->ActionVotes[idx];
+            if (data->ActionRolloutCount.size() > 0) {
+                assert(data->ActionRolloutCount.size() == m_ActionList.size());
+                count += data->ActionRolloutCount[idx];
             }
         if (count > maxCount) {
             maxIdx = idx;
@@ -389,8 +409,10 @@ void Player::ThreadMain(ThreadData *data) {
             working = true;
         else if (signal == Signal::StopThinking)
             working = false;
-        else if (signal == Signal::ReportVotes)
-            ReportVotes(*data, *root);
+        else if (signal == Signal::GetBestAction)
+            ReportData(*data, *root, false);
+        else if (signal == Signal::QueryDetails)
+            ReportData(*data, *root, true);
         else if (signal == Signal::Prune)
             Prune(root);
         data->PromiseDone.set_value();
@@ -481,5 +503,46 @@ void Player::Update(const Action &action) {
         SendSignal(Signal::Prune);
         m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State, *m_Game);
     }
+}
+
+nlohmann::json Player::QueryDetails(const nlohmann::json &) {
+    if (!m_Parallel)
+        return nlohmann::json::object();
+    SendSignal(Signal::QueryDetails);
+    // Accumulate the data reported by each worker threads
+    std::vector<unsigned int> actionRolloutCount(m_ActionList.size(), 0);
+    std::vector<float> actionScore(m_ActionList.size(), 0.0f);
+    unsigned int totalRolloutCount = 0;
+    for (const auto &data : m_ThreadList) {
+        if (data->ActionRolloutCount.size() == 0)
+            continue;
+        assert(data->ActionRolloutCount.size() == m_ActionList.size());
+        assert(data->ActionScore.size() == m_ActionList.size());
+        for (unsigned int idx = 0; idx < m_ActionList.size(); ++idx) {
+            actionRolloutCount[idx] += data->ActionRolloutCount[idx];
+            actionScore[idx] += data->ActionScore[idx] * data->TotalRolloutCount;
+        }
+        totalRolloutCount += data->TotalRolloutCount;
+    }
+    for (unsigned int idx = 0; idx < m_ActionList.size(); ++idx)
+        if (totalRolloutCount != 0)
+            actionScore[idx] /= totalRolloutCount;
+        else
+            actionScore[idx] = 0.0f;
+    // Build the response
+    auto actionListJson = nlohmann::json::array();
+    for (unsigned int idx = 0; idx < m_ActionList.size(); ++idx)
+        actionListJson.push_back({
+            {"action", m_Game->GetJsonOfAction(*m_ActionList[idx])},
+            {"rollouts", actionRolloutCount[idx]},
+            {"score", actionScore[idx]},
+        });
+    std::sort(
+        actionListJson.begin(), actionListJson.end(),
+        [](const nlohmann::json &left, const nlohmann::json &right) { return left["rollouts"] > right["rollouts"]; });
+    return {
+        {"totalRollouts", totalRolloutCount},
+        {"actions", std::move(actionListJson)},
+    };
 }
 } // namespace mcts

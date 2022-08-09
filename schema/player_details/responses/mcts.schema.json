@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Query response of MCTS player",
+    "type": "object",
+    "properties": {
+        "totalRollouts": {
+            "description": "The total number of rollouts",
+            "type": "integer",
+            "minimum": 0
+        },
+        "actions": {
+            "description": "The list of the evaluated actions, sorted by the number of rollouts",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "description": "Check the 'actions' folder for more information"
+                    },
+                    "rollouts": {
+                        "description": "The number of rollouts of the action",
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "score": {
+                        "description": "The score of the action",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "action",
+                    "rollouts",
+                    "score"
+                ],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": [
+        "totalRollouts",
+        "actions"
+    ],
+    "additionalProperties": false
+}

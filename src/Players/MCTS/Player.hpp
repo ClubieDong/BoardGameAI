@@ -62,8 +62,8 @@ private:
     std::unique_ptr<Action> ChooseBestActionSequential(const Node &root) const;
 
     // The following methods are only used for the parallel MCTS algorithm
-    // Copy the visited count of each child of the given root node into the `ThreadData`
-    void ReportVotes(ThreadData &data, const Node &root) const;
+    // Copy the visited count and score of each child of the given root node into the `ThreadData`
+    void ReportData(ThreadData &data, const Node &root, bool includeScore) const;
     // Prune the game tree based on the action taken
     void Prune(std::unique_ptr<Node> &root) const;
     // Choose the most visited action. Used for the parallel MCTS algorithm
@@ -82,5 +82,6 @@ public:
     virtual void StopThinking();
     virtual std::unique_ptr<Action> GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) override;
     virtual void Update(const Action &action) override;
+    virtual nlohmann::json QueryDetails(const nlohmann::json &data) override;
 };
 } // namespace mcts

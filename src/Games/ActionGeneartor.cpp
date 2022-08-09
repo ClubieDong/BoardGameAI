@@ -18,7 +18,7 @@ static const std::unordered_map<std::string, ActionGeneartorCreatorFunc> ActionG
 
 std::unique_ptr<ActionGenerator> ActionGenerator::Create(const std::string &type, const Game &game,
                                                          const nlohmann::json &data) {
-    const auto &actionGeneratorType = std::string(game.GetType()) + '/' + type;
+    const auto actionGeneratorType = std::string(game.GetType()) + '/' + type;
     Util::GetJsonValidator("action_generators/" + actionGeneratorType + ".schema.json").validate(data);
     const auto creator = ActionGeneratorCreatorMap.at(actionGeneratorType);
     return creator(game, data);

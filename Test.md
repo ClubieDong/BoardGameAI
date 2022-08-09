@@ -8,8 +8,8 @@
 ## run_games
 ```json
 {"type":"run_games","data":{"rounds":1,"parallel":false,"game":{"type":"tic_tac_toe","data":{}},"players":[{"type":"random_move","data":{"actionGenerator":{"type":"default","data":{}}},"maxThinkTime":1,"allowBackgroundThinking":true},{"type":"random_move","data":{"actionGenerator":{"type":"default","data":{}}},"maxThinkTime":1,"allowBackgroundThinking":true}]}}
-{"type":"run_games","data":{"rounds":1,"parallel":false,"game":{"type":"gobang","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,-1],[-1,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,-1],[-1,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false}]}}
-{"type":"run_games","data":{"rounds":1,"parallel":false,"game":{"type":"gobang","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,-1],[-1,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":true,"workers":2},"maxThinkTime":1,"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,-1],[-1,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":true,"workers":2},"maxThinkTime":1,"allowBackgroundThinking":false}]}}
+{"type":"run_games","data":{"rounds":1,"parallel":false,"game":{"type":"gobang","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false}]}}
+{"type":"run_games","data":{"rounds":1,"parallel":false,"game":{"type":"gobang","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":true,"workers":2},"maxThinkTime":1,"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":true,"workers":2},"maxThinkTime":1,"allowBackgroundThinking":false}]}}
 ```
 
 ## add_game
@@ -76,4 +76,9 @@
 ## stop_thinking
 ```json
 {"type":"stop_thinking","data":{"gameID":1,"stateID":1,"playerID":1}}
+```
+
+## query_details
+```json
+{"type":"query_details","data":{"gameID":1,"stateID":1,"playerID":1,"data":{}}}
 ```

@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "GetBestAction Request",
-    "description": "Get the best action calculated by the specified player",
+    "title": "QueryDetails Request",
+    "description": "Query the specified player for details",
     "type": "object",
     "properties": {
         "gameID": {
@@ -13,19 +13,18 @@
             "$ref": "basic/id.schema.json"
         },
         "playerID": {
-            "description": "The ID of the player, from which the best action is got",
+            "description": "The ID of the player to be queried",
             "$ref": "basic/id.schema.json"
         },
-        "maxThinkTime": {
-            "description": "The maximum time the player is allowed to think, in seconds. Only works for players with the ability to control think time. If not specified, return as soon as possible",
-            "type": "number",
-            "minimum": 0
+        "data": {
+            "description": "Request of the query. Check the 'player_details/requests' folder for more information"
         }
     },
     "required": [
         "gameID",
         "stateID",
-        "playerID"
+        "playerID",
+        "data"
     ],
     "additionalProperties": false
 }

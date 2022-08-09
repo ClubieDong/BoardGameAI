@@ -44,8 +44,8 @@ void Server::Serve(Server *self, std::string &&reqStr) {
         if (request.contains("id"))
             response["id"] = request["id"];
         Util::GetJsonValidator("request.schema.json").validate(request);
-        const std::string &type = request["type"];
-        const nlohmann::json &reqData = request["data"];
+        const std::string type = request["type"];
+        const auto &reqData = request["data"];
         Util::GetJsonValidator("requests/" + type + ".schema.json").validate(reqData);
         const auto service = ServiceMap.at(type);
         auto respData = (self->*service)(reqData);
@@ -58,7 +58,7 @@ void Server::Serve(Server *self, std::string &&reqStr) {
     }
     Util::GetJsonValidator("response.schema.json").validate(response);
     const std::scoped_lock lock(self->m_MtxOutputStream);
-    self->m_OutputStream << response << std::endl;
+    self->m_OutputStream << response << '\n' << std::flush;
 }
 
 nlohmann::json Server::Echo(const nlohmann::json &data) {
@@ -224,9 +224,20 @@ nlohmann::json Server::GetBestAction(const nlohmann::json &data) {
     return {{"action", std::move(bestActionJson)}};
 }
 
-nlohmann::json Server::QueryDetails(const nlohmann::json &) {
-    // TODO
-    return {};
+nlohmann::json Server::QueryDetails(const nlohmann::json &data) {
+    std::string playerType;
+    const auto &queryRequest = data["data"];
+    nlohmann::json queryResponse;
+    AccessPlayer(data, [&](const GameRecord &, const StateRecord &stateRecord, const PlayerRecord &playerRecord) {
+        // Always lock state before locking player or action generator
+        const std::shared_lock lockState(stateRecord.MtxState);
+        const std::scoped_lock lockPlayer(playerRecord.MtxPlayer);
+        playerType = playerRecord.PlayerPtr->GetType();
+        Util::GetJsonValidator("player_details/requests/" + playerType + ".schema.json").validate(queryRequest);
+        queryResponse = playerRecord.PlayerPtr->QueryDetails(data["data"]);
+    });
+    Util::GetJsonValidator("player_details/responses/" + playerType + ".schema.json").validate(queryResponse);
+    return {{"data", std::move(queryResponse)}};
 }
 
 nlohmann::json Server::RunGames(const nlohmann::json &data) {

@@ -70,10 +70,7 @@ target_link_libraries(${PROJECT_NAME}Benchmark PRIVATE ${THRID_PARTY_LIBRARIES} 
 
 # ========== Copy files ==========
 # schema
-add_custom_command(
-    TARGET ${PROJECT_NAME} ${PROJECT_NAME}Test ${PROJECT_NAME}Benchmark
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/schema/
-    ${CMAKE_BINARY_DIR}/schema/
-)
+set(CUSTOM_COMMAND COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/schema/ ${CMAKE_BINARY_DIR}/schema/)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD ${CUSTOM_COMMAND})
+add_custom_command(TARGET ${PROJECT_NAME}Test POST_BUILD ${CUSTOM_COMMAND})
+add_custom_command(TARGET ${PROJECT_NAME}Benchmark POST_BUILD ${CUSTOM_COMMAND})

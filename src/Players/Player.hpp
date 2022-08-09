@@ -24,4 +24,5 @@ public:
     virtual void StopThinking() {}
     virtual std::unique_ptr<Action> GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) = 0;
     virtual void Update(const Action &) {}
+    virtual nlohmann::json QueryDetails(const nlohmann::json &) { return nlohmann::json::object(); }
 };
