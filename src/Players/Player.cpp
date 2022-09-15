@@ -21,3 +21,9 @@ std::unique_ptr<Player> Player::Create(const std::string &type, const Game &game
     const auto creator = PlayerCreatorMap.at(type);
     return creator(game, state, data);
 }
+
+Player::Player(const Game &game, const State &state, const nlohmann::json &data) : m_Game(&game), m_State(&state) {
+    const auto &actionGeneratorJson = data["actionGenerator"];
+    m_ActionGenerator = ActionGenerator::Create(actionGeneratorJson["type"], game, actionGeneratorJson["data"]);
+    m_ActionGeneratorData = m_ActionGenerator->CreateData(state);
+}

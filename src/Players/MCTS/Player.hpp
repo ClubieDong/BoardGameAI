@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../Games/ActionGenerator.hpp"
 #include "../../Games/Game.hpp"
 #include "../Player.hpp"
 #include <stack>
@@ -21,12 +20,6 @@ private:
     // Facilities for synchronizing threads
     enum class Signal;
     struct ThreadData;
-
-    // Objects related to the game
-    const Game *m_Game;
-    const State *m_State;
-    std::unique_ptr<ActionGenerator> m_ActionGenerator;
-    std::unique_ptr<ActionGenerator::Data> m_ActionGeneratorData;
 
     // Configurations of the MCTS algorithm, see `schema/players/mcts.schema.json` for details
     double m_ExplorationFactor;
@@ -67,11 +60,11 @@ private:
     // Prune the game tree based on the action taken
     void Prune(std::unique_ptr<Node> &root) const;
     // Choose the most visited action. Used for the parallel MCTS algorithm
-    std::unique_ptr<Action> ChooseBestActionParallel() const;
+    std::unique_ptr<Action> ChooseBestActionParallel();
     // Main function for worker threads
     void ThreadMain(ThreadData *data);
     // Send a signal to worker threads and wait for all of them to reply
-    void SendSignal(Signal signal) const;
+    void SendSignal(Signal signal);
 
 public:
     explicit Player(const Game &game, const State &state, const nlohmann::json &data);

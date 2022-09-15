@@ -368,7 +368,7 @@ void Player::Prune(std::unique_ptr<Node> &root) const {
         root = std::move(fullExpNode.Children[m_PruneActionIndex]);
 }
 
-std::unique_ptr<Action> Player::ChooseBestActionParallel() const {
+std::unique_ptr<Action> Player::ChooseBestActionParallel() {
     SendSignal(Signal::GetBestAction);
     // Calculate the action with the most visit count
     unsigned int maxIdx = 0, maxCount = 0;
@@ -421,7 +421,13 @@ void Player::ThreadMain(ThreadData *data) {
     }
 }
 
-void Player::SendSignal(Signal signal) const {
+void Player::SendSignal(Signal signal) {
+    if (m_ThreadList.empty())
+        for (unsigned int idx = 0; idx < m_Workers; ++idx) {
+            auto data = std::make_unique<ThreadData>();
+            data->Thread = std::thread(&Player::ThreadMain, this, data.get());
+            m_ThreadList.push_back(std::move(data));
+        }
     for (const auto &data : m_ThreadList)
         data->PromiseSignal.set_value(signal);
     for (const auto &data : m_ThreadList) {
@@ -432,11 +438,8 @@ void Player::SendSignal(Signal signal) const {
     }
 }
 
-Player::Player(const Game &game, const State &state, const nlohmann::json &data) : m_Game(&game), m_State(&state) {
-    const auto &actionGeneratorJson = data["actionGenerator"];
+Player::Player(const Game &game, const State &state, const nlohmann::json &data) : ::Player(game, state, data) {
     const auto &rolloutPlayerJson = data["rolloutPlayer"];
-    m_ActionGenerator = ActionGenerator::Create(actionGeneratorJson["type"], game, actionGeneratorJson["data"]);
-    m_ActionGeneratorData = m_ActionGenerator->CreateData(state);
     m_ExplorationFactor = data["explorationFactor"];
     m_GoalMatrix = data["goalMatrix"].get<std::vector<std::vector<double>>>();
     m_RolloutPolicyType = rolloutPlayerJson["type"];
@@ -450,11 +453,7 @@ Player::Player(const Game &game, const State &state, const nlohmann::json &data)
             // `hardware_concurrency` may return zero
             // TODO: Need a warning message
             m_Workers = 1;
-        for (unsigned int idx = 0; idx < m_Workers; ++idx) {
-            auto data = std::make_unique<ThreadData>();
-            data->Thread = std::thread(&Player::ThreadMain, this, data.get());
-            m_ThreadList.push_back(std::move(data));
-        }
+        // To avoid leaking `this` during construction, worker threads are created the first time `SendSignal` is called
         m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State, *m_Game);
     } else
         m_Iterations = data["iterations"];

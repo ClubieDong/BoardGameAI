@@ -4,22 +4,6 @@
     "description": "Monte carlo tree search player schema",
     "type": "object",
     "properties": {
-        "explorationFactor": {
-            "description": "The exploration factor in UCB formula",
-            "type": "number"
-        },
-        "goalMatrix": {
-            "description": "A 2D coefficient matrix representing each player's goal",
-            "type": "array",
-            "items": {
-                "type": "array",
-                "items": {
-                    "type": "number"
-                },
-                "minItems": 1
-            },
-            "minItems": 1
-        },
         "actionGenerator": {
             "description": "Used to generate actions used in simulations",
             "type": "object",
@@ -37,6 +21,22 @@
                 "data"
             ],
             "additionalProperties": false
+        },
+        "explorationFactor": {
+            "description": "The exploration factor in UCB formula",
+            "type": "number"
+        },
+        "goalMatrix": {
+            "description": "A 2D coefficient matrix representing each player's goal",
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "number"
+                },
+                "minItems": 1
+            },
+            "minItems": 1
         },
         "rolloutPlayer": {
             "description": "Rollout policy",
@@ -104,9 +104,9 @@
         }
     ],
     "required": [
+        "actionGenerator",
         "explorationFactor",
         "goalMatrix",
-        "actionGenerator",
         "rolloutPlayer",
         "parallel"
     ]
