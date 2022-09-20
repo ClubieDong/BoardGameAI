@@ -4,7 +4,7 @@
 
 TEST(Test, Case1) {
     Server server(std::cin, std::cout);
-    server.AddGame(R"({"type":"gobang","data":{}})"_json);
+    server.AddGame(R"({"type":"gomoku","data":{}})"_json);
     server.AddState(R"({"gameID":1})"_json);
     server.AddPlayer(
         R"({"gameID":1,"stateID":1,"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":true,"workers":2}})"_json);
@@ -19,5 +19,5 @@ TEST(Test, Case1) {
 TEST(Test, Case2) {
     Server server(std::cin, std::cout);
     server.RunGames(
-        R"({"rounds":1,"parallel":false,"game":{"type":"gobang","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false}]})"_json);
+        R"({"rounds":1,"parallel":false,"game":{"type":"gomoku","data":{}},"players":[{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false},{"type":"mcts","data":{"explorationFactor":1,"goalMatrix":[[1,0],[0,1]],"actionGenerator":{"type":"neighbor","data":{"range":1}},"rolloutPlayer":{"type":"random_move","data":{"actionGenerator":{"type":"neighbor","data":{"range":1}}}},"parallel":false,"iterations":1000},"allowBackgroundThinking":false}]})"_json);
 }

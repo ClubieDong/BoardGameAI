@@ -59,7 +59,7 @@ namespace mcts {
 //     [FullyExpandedNode]
 
 // To offer an insight, here are the numbers of each node type, and the time spent on each step of the algorithm after
-// performing 100,000 iterations on Gobang with neighbor action generator (range=1):
+// performing 100,000 iterations on Gomoku with neighbor action generator (range=1):
 //   Node count:
 //     TerminalNode:               0
 //     NewNode:               65,877
@@ -88,16 +88,16 @@ struct Player::TerminalNode : public Node {
 };
 
 struct Player::NewNode : public Node {
-    std::unique_ptr<struct Action> Action;
+    std::unique_ptr<Game::Action> Action;
 
-    explicit NewNode(std::unique_ptr<struct Action> &&action) : Node(0.0f, 0), Action(std::move(action)) {}
+    explicit NewNode(std::unique_ptr<Game::Action> &&action) : Node(0.0f, 0), Action(std::move(action)) {}
 };
 
 struct Player::UnexpandedNode : public Node {
-    std::unique_ptr<struct State> State;
+    std::unique_ptr<Game::State> State;
     std::unique_ptr<ActionGenerator::Data> ActionGeneratorData;
 
-    explicit UnexpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<struct State> &&state,
+    explicit UnexpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<Game::State> &&state,
                             std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData)
         : Node(score, rolloutCount), State(std::move(state)), ActionGeneratorData(std::move(actionGeneratorData)) {}
 };
@@ -110,20 +110,20 @@ struct Player::ExpandedNode : public Node {
 };
 
 struct Player::PartiallyExpandedNode : public ExpandedNode {
-    std::unique_ptr<struct State> State;
+    std::unique_ptr<Game::State> State;
     std::unique_ptr<ActionGenerator::Data> ActionGeneratorData;
-    std::unique_ptr<Action> NextAction;
+    std::unique_ptr<ActionGenerator::Iterator> ActionIterator;
 
-    explicit PartiallyExpandedNode(std::unique_ptr<struct State> &&state,
+    explicit PartiallyExpandedNode(std::unique_ptr<Game::State> &&state,
                                    std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData,
-                                   std::unique_ptr<Action> &&nextAction)
+                                   std::unique_ptr<ActionGenerator::Iterator> &&actionIterator)
         : ExpandedNode(0.0f, 0, {}), State(std::move(state)), ActionGeneratorData(std::move(actionGeneratorData)),
-          NextAction(std::move(nextAction)) {}
-    explicit PartiallyExpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<struct State> &&state,
+          ActionIterator(std::move(actionIterator)) {}
+    explicit PartiallyExpandedNode(float score, uint32_t rolloutCount, std::unique_ptr<Game::State> &&state,
                                    std::unique_ptr<ActionGenerator::Data> &&actionGeneratorData,
-                                   std::unique_ptr<Action> &&nextAction)
+                                   std::unique_ptr<ActionGenerator::Iterator> &&actionIterator)
         : ExpandedNode(score, rolloutCount, {}), State(std::move(state)),
-          ActionGeneratorData(std::move(actionGeneratorData)), NextAction(std::move(nextAction)) {}
+          ActionGeneratorData(std::move(actionGeneratorData)), ActionIterator(std::move(actionIterator)) {}
 };
 
 struct Player::FullyExpandedNode : public ExpandedNode {
@@ -186,17 +186,21 @@ Player::Node &Player::Expand(std::unique_ptr<Player::Node> &node, std::stack<Exp
     if (typeid(*node) == typeid(UnexpandedNode)) {
         // Move state and action generator data from `UnexpandedNode` to the new `PartiallyExpandedNode`
         auto &unExpNode = static_cast<UnexpandedNode &>(*node);
-        auto nextAction = m_ActionGenerator->FirstAction(*unExpNode.ActionGeneratorData, *unExpNode.State);
+        auto actionIterator = m_ActionGenerator->FirstIterator(*unExpNode.ActionGeneratorData, *unExpNode.State);
         node = std::make_unique<PartiallyExpandedNode>(node->Score, node->RolloutCount, std::move(unExpNode.State),
-                                                       std::move(unExpNode.ActionGeneratorData), std::move(nextAction));
+                                                       std::move(unExpNode.ActionGeneratorData),
+                                                       std::move(actionIterator));
     }
     assert(typeid(*node) == typeid(PartiallyExpandedNode));
     // Expand the current node. Instead of expanding all child nodes at once, we create one child node per visit
     auto &partExpNode = static_cast<PartiallyExpandedNode &>(*node);
-    std::unique_ptr<Node> newNode = std::make_unique<NewNode>(m_Game->CloneAction(*partExpNode.NextAction));
+    const auto &nextAction = m_ActionGenerator->GetActionFromIterator(*partExpNode.ActionGeneratorData,
+                                                                      *partExpNode.State, *partExpNode.ActionIterator);
+    std::unique_ptr<Node> newNode = std::make_unique<NewNode>(nextAction.Clone());
     partExpNode.Children.push_back(std::move(newNode));
     // If all children are expanded, turn this node into a `FullyExpandedNode`
-    if (!m_ActionGenerator->NextAction(*partExpNode.ActionGeneratorData, *partExpNode.State, *partExpNode.NextAction)) {
+    if (!m_ActionGenerator->NextIterator(*partExpNode.ActionGeneratorData, *partExpNode.State,
+                                         *partExpNode.ActionIterator)) {
         // Because the parent state is about to be freed (there is no `State` in `FullyExpandedNode`), all `NewNode`s of
         // the children should be turned into `UnexpandedNode`, that is, the children should store `State` instead of
         // `Action`
@@ -206,15 +210,15 @@ Player::Node &Player::Expand(std::unique_ptr<Player::Node> &node, std::stack<Exp
                 continue;
             const auto &childNewNode = static_cast<const NewNode &>(*childNode);
             // Clone the state and action generator data from the parent, and take action on the cloned ones
-            auto state = m_Game->CloneState(*partExpNode.State);
+            auto state = partExpNode.State->Clone();
             auto result = m_Game->TakeAction(*state, *childNewNode.Action);
             if (result) {
                 childNode =
                     std::make_unique<TerminalNode>(childNode->Score, childNode->RolloutCount, std::move(*result));
                 continue;
             }
-            auto actionGeneratorData = m_ActionGenerator->CloneData(*partExpNode.ActionGeneratorData);
-            m_ActionGenerator->Update(*actionGeneratorData, *childNewNode.Action);
+            auto actionGeneratorData = partExpNode.ActionGeneratorData->Clone();
+            m_ActionGenerator->UpdateData(*actionGeneratorData, *state, *childNewNode.Action);
             childNode = std::make_unique<UnexpandedNode>(childNewNode.Score, childNewNode.RolloutCount,
                                                          std::move(state), std::move(actionGeneratorData));
         }
@@ -236,20 +240,20 @@ std::vector<float> Player::Rollout(const Node &node, const std::stack<ExpandedNo
         return static_cast<const TerminalNode &>(node).Result;
     assert(node.RolloutCount == 0);
     // Get the state to perform rollout, if it's `NewNode`, the state is calculated from the action
-    std::unique_ptr<State> state;
+    std::unique_ptr<Game::State> state;
     if (typeid(node) == typeid(NewNode)) {
         assert(!path.empty());
         assert(typeid(*path.top()) == typeid(PartiallyExpandedNode));
         const auto &lastPartExpNode = static_cast<const PartiallyExpandedNode &>(*path.top());
         const auto &newNode = static_cast<const NewNode &>(node);
-        state = m_Game->CloneState(*lastPartExpNode.State);
+        state = lastPartExpNode.State->Clone();
         auto result = m_Game->TakeAction(*state, *newNode.Action);
         if (result)
             return std::move(*result);
     } else { // if (typeid(node) == typeid(UnexpandedNode))
         assert(typeid(node) == typeid(UnexpandedNode));
         const auto &unExpNode = static_cast<const UnexpandedNode &>(node);
-        state = m_Game->CloneState(*unExpNode.State);
+        state = unExpNode.State->Clone();
     }
     // Rollout
     const auto player = Player::Create(m_RolloutPolicyType, *m_Game, *state, m_RolloutPolicyData);
@@ -296,11 +300,11 @@ void Player::BackPropagate(Node *node, std::stack<ExpandedNode *> &path, const s
 }
 
 std::unique_ptr<Player::Node> Player::CreateRootNode() const {
-    auto state = m_Game->CloneState(*m_State);
-    auto actionGeneratorData = m_ActionGenerator->CloneData(*m_ActionGeneratorData);
-    auto nextAction = m_ActionGenerator->FirstAction(*actionGeneratorData, *state);
+    auto state = m_State->Clone();
+    auto actionGeneratorData = m_ActionGeneratorData->Clone();
+    auto actionIterator = m_ActionGenerator->FirstIterator(*actionGeneratorData, *state);
     return std::make_unique<PartiallyExpandedNode>(std::move(state), std::move(actionGeneratorData),
-                                                   std::move(nextAction));
+                                                   std::move(actionIterator));
 }
 
 void Player::RunSingleIteration(std::unique_ptr<Node> &root, std::stack<ExpandedNode *> &path) const {
@@ -310,12 +314,14 @@ void Player::RunSingleIteration(std::unique_ptr<Node> &root, std::stack<Expanded
     BackPropagate(&expandedNode, path, result);
 }
 
-std::unique_ptr<Action> Player::ChooseBestActionSequential(const Node &root) const {
-    if (typeid(root) != typeid(FullyExpandedNode))
+std::unique_ptr<Game::Action> Player::ChooseBestActionSequential(const Node &root) const {
+    if (typeid(root) != typeid(FullyExpandedNode)) {
         // If the root node is not `FullyExpandedNode`, not all actions are evaluated, so we return the first action as
         // a fallback strategy, the same for `ReportData` and `Prune` below
         // TODO: Need a warning message
-        return m_ActionGenerator->FirstAction(*m_ActionGeneratorData, *m_State);
+        const auto &firstAction = *m_ActionGenerator->begin(*m_ActionGeneratorData, *m_State);
+        return firstAction.Clone();
+    }
     const auto &fullExpNode = static_cast<const FullyExpandedNode &>(root);
     assert(fullExpNode.Children.size() > 0);
     // Get the index of the action with the most rollouts
@@ -368,7 +374,7 @@ void Player::Prune(std::unique_ptr<Node> &root) const {
         root = std::move(fullExpNode.Children[m_PruneActionIndex]);
 }
 
-std::unique_ptr<Action> Player::ChooseBestActionParallel() {
+std::unique_ptr<Game::Action> Player::ChooseBestActionParallel() {
     SendSignal(Signal::GetBestAction);
     // Calculate the action with the most visit count
     unsigned int maxIdx = 0, maxCount = 0;
@@ -438,7 +444,7 @@ void Player::SendSignal(Signal signal) {
     }
 }
 
-Player::Player(const Game &game, const State &state, const nlohmann::json &data) : ::Player(game, state, data) {
+Player::Player(const Game &game, const Game::State &state, const nlohmann::json &data) : ::Player(game, state, data) {
     const auto &rolloutPlayerJson = data["rolloutPlayer"];
     m_ExplorationFactor = data["explorationFactor"];
     m_GoalMatrix = data["goalMatrix"].get<std::vector<std::vector<double>>>();
@@ -454,7 +460,7 @@ Player::Player(const Game &game, const State &state, const nlohmann::json &data)
             // TODO: Need a warning message
             m_Workers = 1;
         // To avoid leaking `this` during construction, worker threads are created the first time `SendSignal` is called
-        m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State, *m_Game);
+        m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State);
     } else
         m_Iterations = data["iterations"];
 }
@@ -477,7 +483,7 @@ void Player::StopThinking() {
         SendSignal(Signal::StopThinking);
 }
 
-std::unique_ptr<Action> Player::GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) {
+std::unique_ptr<Game::Action> Player::GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) {
     if (m_Parallel) {
         if (maxThinkTime)
             std::this_thread::sleep_for(*maxThinkTime);
@@ -490,17 +496,17 @@ std::unique_ptr<Action> Player::GetBestAction(std::optional<std::chrono::duratio
     return ChooseBestActionSequential(*root);
 }
 
-void Player::Update(const Action &action) {
+void Player::Update(const Game::Action &action) {
     // It's OK to update action generator data while worker threads are running
-    m_ActionGenerator->Update(*m_ActionGeneratorData, action);
+    m_ActionGenerator->UpdateData(*m_ActionGeneratorData, *m_State, action);
     if (m_Parallel) {
         // If the action taken is not found in `m_ActionList`, `m_PruneActionIndex` is equal to `m_ActionList.size()`
         m_PruneActionIndex =
             std::find_if(m_ActionList.cbegin(), m_ActionList.cend(),
-                         [&](const std::unique_ptr<Action> &actPtr) { return m_Game->EqualAction(*actPtr, action); }) -
+                         [&](const std::unique_ptr<Game::Action> &actPtr) { return action.Equal(*actPtr); }) -
             m_ActionList.cbegin();
         SendSignal(Signal::Prune);
-        m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State, *m_Game);
+        m_ActionList = m_ActionGenerator->GetActionList(*m_ActionGeneratorData, *m_State);
     }
 }
 
@@ -532,7 +538,7 @@ nlohmann::json Player::QueryDetails(const nlohmann::json &) {
     auto actionListJson = nlohmann::json::array();
     for (unsigned int idx = 0; idx < m_ActionList.size(); ++idx)
         actionListJson.push_back({
-            {"action", m_Game->GetJsonOfAction(*m_ActionList[idx])},
+            {"action", m_ActionList[idx]->GetJson()},
             {"rollouts", actionRolloutCount[idx]},
             {"score", actionScore[idx]},
         });

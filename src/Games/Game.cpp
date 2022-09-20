@@ -1,5 +1,5 @@
 #include "Game.hpp"
-#include "Gobang/Game.hpp"
+#include "Gomoku/Game.hpp"
 #include "TicTacToe/Game.hpp"
 #include <unordered_map>
 
@@ -11,7 +11,7 @@ static std::unique_ptr<Game> CreateGame(const nlohmann::json &data) {
 using GameCreatorFunc = std::unique_ptr<Game> (*)(const nlohmann::json &);
 static const std::unordered_map<std::string, GameCreatorFunc> GameCreatorMap = {
     {"tic_tac_toe", CreateGame<tic_tac_toe::Game>},
-    {"gobang", CreateGame<gobang::Game>},
+    {"gomoku", CreateGame<gomoku::Game>},
 };
 
 std::unique_ptr<Game> Game::Create(const std::string &type, const nlohmann::json &data) {

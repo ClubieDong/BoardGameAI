@@ -31,11 +31,11 @@ private:
     struct StateRecord {
         // Used to lock the `State` object
         mutable std::shared_mutex MtxState;
-        const std::unique_ptr<State> StatePtr;
+        const std::unique_ptr<Game::State> StatePtr;
         ConcurrentIDMap<PlayerRecord> SubPlayers;
         ConcurrentIDMap<ActionGeneratorRecord> SubActionGenerators;
 
-        explicit StateRecord(std::unique_ptr<State> &&statePtr) : StatePtr(std::move(statePtr)) {}
+        explicit StateRecord(std::unique_ptr<Game::State> &&statePtr) : StatePtr(std::move(statePtr)) {}
     };
 
     struct PlayerRecord {

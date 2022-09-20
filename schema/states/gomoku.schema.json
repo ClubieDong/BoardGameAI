@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "Gobang State",
-    "description": "Gobang state schema",
+    "title": "Gomoku State",
+    "description": "Gomoku state schema",
     "type": "object",
     "properties": {
         "board": {

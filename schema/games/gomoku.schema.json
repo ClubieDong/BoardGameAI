@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "Gobang Default ActionGenerator",
-    "description": "Gobang default action generator schema",
+    "title": "Gomoku Game",
+    "description": "Gomoku game schema",
     "type": "object",
     "additionalProperties": false
 }

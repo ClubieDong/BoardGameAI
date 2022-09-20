@@ -5,6 +5,6 @@
     "type": "string",
     "enum": [
         "tic_tac_toe",
-        "gobang"
+        "gomoku"
     ]
 }

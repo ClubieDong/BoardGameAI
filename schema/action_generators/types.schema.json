@@ -11,7 +11,7 @@
             ]
         },
         {
-            "description": "Action generators of gobang",
+            "description": "Action generators of gomoku",
             "enum": [
                 "default",
                 "neighbor"

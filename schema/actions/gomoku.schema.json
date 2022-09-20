@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "title": "Gobang Action",
-    "description": "Gobang action schema",
+    "title": "Gomoku Action",
+    "description": "Gomoku action schema",
     "type": "object",
     "properties": {
         "row": {

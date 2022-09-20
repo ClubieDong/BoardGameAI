@@ -34,7 +34,7 @@ private:
     std::vector<std::unique_ptr<ThreadData>> m_ThreadList;
     // Actions available in the current state. When `Update` is called, `m_State` has changed, and no action information
     // is stored in the root node of the game tree, so this is needed to calculate the action index during `Prune`
-    std::vector<std::unique_ptr<Action>> m_ActionList;
+    std::vector<std::unique_ptr<Game::Action>> m_ActionList;
     // Used to tell the worker threads which action was taken during `Prune`. If `m_PruneActionIndex` is out of bounds,
     // it means that the opponent took an action that we did not consider.
     unsigned int m_PruneActionIndex;
@@ -52,7 +52,7 @@ private:
     // Call `Select`, `Expand`, `Rollout`, and `BackPropagate`
     void RunSingleIteration(std::unique_ptr<Node> &root, std::stack<ExpandedNode *> &path) const;
     // Choose the most visited action, given the root node. Used for the sequential MCTS algorithm
-    std::unique_ptr<Action> ChooseBestActionSequential(const Node &root) const;
+    std::unique_ptr<Game::Action> ChooseBestActionSequential(const Node &root) const;
 
     // The following methods are only used for the parallel MCTS algorithm
     // Copy the visited count and score of each child of the given root node into the `ThreadData`
@@ -60,21 +60,22 @@ private:
     // Prune the game tree based on the action taken
     void Prune(std::unique_ptr<Node> &root) const;
     // Choose the most visited action. Used for the parallel MCTS algorithm
-    std::unique_ptr<Action> ChooseBestActionParallel();
+    std::unique_ptr<Game::Action> ChooseBestActionParallel();
     // Main function for worker threads
     void ThreadMain(ThreadData *data);
     // Send a signal to worker threads and wait for all of them to reply
     void SendSignal(Signal signal);
 
 public:
-    explicit Player(const Game &game, const State &state, const nlohmann::json &data);
+    explicit Player(const Game &game, const Game::State &state, const nlohmann::json &data);
     ~Player();
 
     virtual std::string_view GetType() const override { return "mcts"; }
     virtual void StartThinking();
     virtual void StopThinking();
-    virtual std::unique_ptr<Action> GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) override;
-    virtual void Update(const Action &action) override;
+    virtual std::unique_ptr<Game::Action>
+    GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) override;
+    virtual void Update(const Game::Action &action) override;
     virtual nlohmann::json QueryDetails(const nlohmann::json &data) override;
 };
 } // namespace mcts
