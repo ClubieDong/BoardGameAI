@@ -4,6 +4,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(BoardGameAI CXX)
 
+# ========== Enable link time optimization if supported ==========
+include(CheckIPOSupported)
+check_ipo_supported(RESULT CHECK_IPO_RESULT)
+if(CHECK_IPO_RESULT)
+    message("Link time optimization is enabled")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 # ========== Compiler & linker options ==========
 # Enable the highest level of warning
 set(WARNING_OPTIONS
@@ -64,9 +72,14 @@ target_link_libraries(${PROJECT_NAME}Test PRIVATE ${THRID_PARTY_LIBRARIES} ${THR
 # Benchmark
 file(GLOB_RECURSE BENCHMARK_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/benchmark/*.cpp)
 add_executable(${PROJECT_NAME}Benchmark ${SRC_FILES} ${BENCHMARK_FILES})
-target_compile_options(${PROJECT_NAME}Benchmark PRIVATE ${WARNING_OPTIONS} ${PROFILE_OPTIONS})
-target_link_options(${PROJECT_NAME}Benchmark PRIVATE ${PROFILE_OPTIONS})
+target_compile_options(${PROJECT_NAME}Benchmark PRIVATE ${WARNING_OPTIONS})
 target_link_libraries(${PROJECT_NAME}Benchmark PRIVATE ${THRID_PARTY_LIBRARIES} ${THRID_PARTY_LIBRARIES_FOR_BENCHMARK})
+
+# Profile
+add_executable(${PROJECT_NAME}Profile ${SRC_FILES} ${BENCHMARK_FILES})
+target_compile_options(${PROJECT_NAME}Profile PRIVATE ${WARNING_OPTIONS} ${PROFILE_OPTIONS})
+target_link_options(${PROJECT_NAME}Profile PRIVATE ${PROFILE_OPTIONS})
+target_link_libraries(${PROJECT_NAME}Profile PRIVATE ${THRID_PARTY_LIBRARIES} ${THRID_PARTY_LIBRARIES_FOR_BENCHMARK})
 
 # ========== Copy files ==========
 # schema

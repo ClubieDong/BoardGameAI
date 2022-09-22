@@ -9,8 +9,6 @@
 #include <vector>
 
 // TODO: Result: small vector optimization
-// TODO: Comments
-// TODO: explicit
 
 class Game : public Util::NonCopyableNonMoveable {
 public:

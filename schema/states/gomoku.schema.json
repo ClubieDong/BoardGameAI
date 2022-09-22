@@ -4,12 +4,19 @@
     "description": "Gomoku state schema",
     "type": "object",
     "properties": {
+        "moveCount": {
+            "description": "The number of moves",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 225
+        },
         "board": {
             "description": "15x15 board",
             "$ref": "basic/board.schema.json"
         }
     },
     "required": [
+        "moveCount",
         "board"
     ],
     "additionalProperties": false

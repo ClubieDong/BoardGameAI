@@ -12,6 +12,7 @@ private:
 public:
     struct Data : public ActionGenerator::Data {
         std::bitset<RowCount * ColCount> InRange;
+        std::bitset<RowCount> AnyInRow;
 
         friend bool operator==(const Data &left, const Data &right) { return left.InRange == right.InRange; }
 
@@ -42,6 +43,7 @@ public:
         const auto &state = static_cast<const typename Game<RowCount, ColCount, Renju>::State &>(state_);
         auto data = std::make_unique<Data>();
         data->InRange[RowCount / 2 * ColCount + ColCount / 2] = true;
+        data->AnyInRow[RowCount / 2] = true;
         for (typename Game<RowCount, ColCount, Renju>::Action action(0); action.Position < RowCount * ColCount;
              ++action.Position)
             if (state.GetGrid(action.Position) != 0)
@@ -49,15 +51,21 @@ public:
         return data;
     }
 
-    virtual void UpdateData(ActionGenerator::Data &data_, const ::Game::State &, const ::Game::Action &action_) const {
+    virtual void UpdateData(ActionGenerator::Data &data_, const ::Game::State &state_,
+                            const ::Game::Action &action_) const override {
         auto &data = static_cast<Data &>(data_);
+        const auto &state = static_cast<const typename Game<RowCount, ColCount, Renju>::State &>(state_);
         const auto &action = static_cast<const typename Game<RowCount, ColCount, Renju>::Action &>(action_);
         const auto row = action.GetRow(), col = action.GetCol();
         const unsigned char rowBegin = std::max(0, row - m_Range), rowEnd = std::min(RowCount - 1, row + m_Range);
         const unsigned char colBegin = std::max(0, col - m_Range), colEnd = std::min(ColCount - 1, col + m_Range);
-        for (auto rowIdx = rowBegin; rowIdx <= rowEnd; ++rowIdx)
+        for (auto rowIdx = rowBegin; rowIdx <= rowEnd; ++rowIdx) {
+            data.AnyInRow[rowIdx] = true;
             for (auto colIdx = colBegin; colIdx <= colEnd; ++colIdx)
-                data.InRange[rowIdx * ColCount + colIdx] = true;
+                if (state.GetGrid(rowIdx * ColCount + colIdx) == 0)
+                    data.InRange[rowIdx * ColCount + colIdx] = true;
+        }
+        data.InRange[action.Position] = false;
     }
 
     virtual std::unique_ptr<ActionGenerator::Iterator> FirstIterator(const ActionGenerator::Data &data,
@@ -68,14 +76,22 @@ public:
         return iterator;
     }
 
-    virtual bool NextIterator(const ActionGenerator::Data &data_, const ::Game::State &state_,
+    virtual bool NextIterator(const ActionGenerator::Data &data_, const ::Game::State &,
                               ActionGenerator::Iterator &iterator_) const override {
         const auto &data = static_cast<const Data &>(data_);
-        const auto &state = static_cast<const typename Game<RowCount, ColCount, Renju>::State &>(state_);
         auto &iterator = static_cast<Iterator &>(iterator_);
-        for (++iterator.Action.Position; iterator.Action.Position < RowCount * ColCount; ++iterator.Action.Position)
-            if (data.InRange[iterator.Action.Position] && state.GetGrid(iterator.Action.Position) == 0)
+        ++iterator.Action.Position;
+        for (auto col = iterator.Action.GetCol(); col < ColCount; ++col, ++iterator.Action.Position)
+            if (data.InRange[iterator.Action.Position])
                 return true;
+        assert(iterator.Action.Position % ColCount == 0);
+        for (auto row = iterator.Action.GetRow(); row < RowCount; ++row)
+            if (!data.AnyInRow[row])
+                iterator.Action.Position += ColCount;
+            else
+                for (unsigned char col = 0; col < ColCount; ++col, ++iterator.Action.Position)
+                    if (data.InRange[iterator.Action.Position])
+                        return true;
         return false;
     }
 

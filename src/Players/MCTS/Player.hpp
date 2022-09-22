@@ -71,8 +71,8 @@ public:
     ~Player();
 
     virtual std::string_view GetType() const override { return "mcts"; }
-    virtual void StartThinking();
-    virtual void StopThinking();
+    virtual void StartThinking() override;
+    virtual void StopThinking() override;
     virtual std::unique_ptr<Game::Action>
     GetBestAction(std::optional<std::chrono::duration<double>> maxThinkTime) override;
     virtual void Update(const Game::Action &action) override;

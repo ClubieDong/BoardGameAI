@@ -20,7 +20,7 @@
 ## add_state
 ```json
 {"type":"add_state","data":{"gameID":1}}
-{"type":"add_state","data":{"gameID":1,"data":{"board":[[0,0,0],[0,1,0],[0,0,0]]}}}
+{"type":"add_state","data":{"gameID":1,"data":{"moveCount":1,"board":[[0,0,0],[0,1,0],[0,0,0]]}}}
 ```
 
 ## add_player

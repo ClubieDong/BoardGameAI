@@ -4,12 +4,19 @@
     "description": "Tic-tac-toe state schema",
     "type": "object",
     "properties": {
+        "moveCount": {
+            "description": "The number of moves",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9
+        },
         "board": {
             "description": "3x3 board",
             "$ref": "basic/board.schema.json"
         }
     },
     "required": [
+        "moveCount",
         "board"
     ],
     "additionalProperties": false

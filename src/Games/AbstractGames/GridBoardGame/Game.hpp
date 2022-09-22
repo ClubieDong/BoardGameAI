@@ -19,9 +19,8 @@ public:
         std::array<std::bitset<RowCount * ColCount>, PlayerCount> BitBoards = {};
 
         State() = default;
-        explicit State(const nlohmann::json &data) {
+        explicit State(const nlohmann::json &data) : MoveCount(data["moveCount"]) {
             const auto &board = data["board"];
-            // TODO: MoveCount
             if (board.size() != RowCount)
                 throw std::invalid_argument("The number of board rows does not match");
             for (unsigned char rowIdx = 0; rowIdx < RowCount; ++rowIdx) {
@@ -35,7 +34,6 @@ public:
                     if (player > PlayerCount)
                         throw std::invalid_argument("The grid value exceeds the number of players");
                     SetGrid(rowIdx * ColCount + colIdx, player - 1, false);
-                    ++MoveCount;
                 }
             }
         }
@@ -69,14 +67,14 @@ public:
         virtual bool Equal(const ::Game::State &state) const override {
             return *this == static_cast<const State &>(state);
         }
-        virtual nlohmann::json GetJson() const override { return {{"board", GetBoard()}}; } // TODO: Add MoveCount
+        virtual nlohmann::json GetJson() const override { return {{"moveCount", MoveCount}, {"board", GetBoard()}}; }
     };
 
     struct Action : public ::Game::Action {
     public:
         PosType Position;
 
-        explicit Action() = default;
+        Action() = default;
         explicit Action(PosType position) : Position(position) {}
         explicit Action(unsigned char row, unsigned char col) : Action(row * ColCount + col) {}
         explicit Action(const nlohmann::json &data) {

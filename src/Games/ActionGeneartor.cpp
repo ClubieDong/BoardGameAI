@@ -49,7 +49,6 @@ std::unique_ptr<Game::Action> ActionGenerator::GetNthAction(const Data &data, co
 }
 
 std::unique_ptr<Game::Action> ActionGenerator::GetRandomAction(const Data &data, const Game::State &state) const {
-    // TODO: Comment
     unsigned int count = 0;
     std::unique_ptr<Game::Action> chosenAction;
     auto &engine = Util::GetRandomEngine();
