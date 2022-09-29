@@ -12,7 +12,8 @@ private:
 public:
     struct Data : public ActionGenerator::Data {
         std::bitset<RowCount * ColCount> InRange;
-        std::bitset<RowCount> AnyInRow;
+        std::array<unsigned char, RowCount> CountInRow = {};
+        typename Game<RowCount, ColCount, Renju>::PosType TotalCount = 0;
 
         friend bool operator==(const Data &left, const Data &right) { return left.InRange == right.InRange; }
 
@@ -43,7 +44,7 @@ public:
         const auto &state = static_cast<const typename Game<RowCount, ColCount, Renju>::State &>(state_);
         auto data = std::make_unique<Data>();
         data->InRange[RowCount / 2 * ColCount + ColCount / 2] = true;
-        data->AnyInRow[RowCount / 2] = true;
+        data->CountInRow[RowCount / 2] = 1;
         for (typename Game<RowCount, ColCount, Renju>::Action action(0); action.Position < RowCount * ColCount;
              ++action.Position)
             if (state.GetGrid(action.Position) != 0)
@@ -60,12 +61,13 @@ public:
         const unsigned char rowBegin = std::max(0, row - m_Range), rowEnd = std::min(RowCount - 1, row + m_Range);
         const unsigned char colBegin = std::max(0, col - m_Range), colEnd = std::min(ColCount - 1, col + m_Range);
         for (auto rowIdx = rowBegin; rowIdx <= rowEnd; ++rowIdx) {
-            data.AnyInRow[rowIdx] = true;
+            ++data.CountInRow[rowIdx];
             for (auto colIdx = colBegin; colIdx <= colEnd; ++colIdx)
                 if (state.GetGrid(rowIdx * ColCount + colIdx) == 0)
                     data.InRange[rowIdx * ColCount + colIdx] = true;
         }
         data.InRange[action.Position] = false;
+        --data.CountInRow[row];
     }
 
     virtual std::unique_ptr<ActionGenerator::Iterator> FirstIterator(const ActionGenerator::Data &data,
@@ -86,7 +88,7 @@ public:
                 return true;
         assert(iterator.Action.Position % ColCount == 0);
         for (auto row = iterator.Action.GetRow(); row < RowCount; ++row)
-            if (!data.AnyInRow[row])
+            if (data.CountInRow[row] == 0)
                 iterator.Action.Position += ColCount;
             else
                 for (unsigned char col = 0; col < ColCount; ++col, ++iterator.Action.Position)
